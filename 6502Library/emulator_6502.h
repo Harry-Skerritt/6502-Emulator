@@ -10,6 +10,10 @@
 #include <iomanip>
 #include <set>
 #include <sstream>
+#include <fstream>
+#include <filesystem>
+#include <chrono>
+
 
 namespace  emulator_6502 {
 
@@ -21,7 +25,8 @@ namespace  emulator_6502 {
 
     using u32 = uint32_t;
 
-    struct Memory {
+    class Memory {
+    public:
         static const u32 MAX_MEMORY = 1024 * 64;
         Byte data[MAX_MEMORY];
 
@@ -40,86 +45,86 @@ namespace  emulator_6502 {
         //void loadMemory(std::string& loc);
 
         void dumpMemory(size_t start = 0, size_t length = 256);
+        void dumpMemoryToFile(size_t start = 0, size_t length = 256);
 
     };
 
-    // Opcodes
-    static constexpr Byte
-        // Load Registers Opcodes
-        INS_LDA_IM = 0xA9,
-        INS_LDA_ZP = 0xA5,
-        INS_LDA_ZPX = 0xB5,
-        INS_LDA_ABS = 0xAD,
-        INS_LDA_ABSX = 0xBD,
-        INS_LDA_ABSY = 0xB9,
-        INS_LDA_INDX = 0xA1,
-        INS_LDA_INDY = 0xB1,
-
-        INS_LDX_IM = 0xA2,
-        INS_LDX_ZP = 0xA6,
-        INS_LDX_ZPY = 0xB6,
-        INS_LDX_ABS = 0xAE,
-        INS_LDX_ABSY = 0xBE,
-
-        INS_LDY_IM = 0xA0,
-        INS_LDY_ZP = 0xA4,
-        INS_LDY_ZPX = 0xB4,
-        INS_LDY_ABS = 0xAC,
-        INS_LDY_ABSX = 0xBC,
-
-        // Store Registers Opcodes
-        INS_STA_ZP = 0x85,
-        INS_STA_ZPX = 0x95,
-        INS_STA_ABS = 0x8D,
-        INS_STA_ABSX = 0x9D,
-        INS_STA_ABSY = 0x99,
-        INS_STA_INDX = 0x81,
-        INS_STA_INDY = 0x91;
-
-    struct CPU {
-
+    class CPU {
+    public:
         Word PC;    // Program Counter
         Byte SP;    // Stack Pointer
         Byte Accumulator;     // Accumulator (register)
         Byte X_reg;     // X Register
         Byte Y_reg;     // Y Register
 
-        /*
-         N = Negative Flag
-         V = Overflow Flag
-         B = Break Flag
-         I = Interrupt Disabled
-         Z = Zero Flag
-         C = Carry Flag
-         D = Decimal Flag
-         */
-        Byte N, V, B, I, Z, C, D : 1; // Status Flags
+        struct StatusFlags {
+            Byte C : 1; // Carry
+            Byte Z : 1; // Zero
+            Byte I : 1; // Interrupt Disable
+            Byte D : 1; // Decimal Mode
+            Byte B : 1; // Break
+            Byte V : 1; // Overflow
+            Byte N : 1; // Negative
+            Byte unused : 1; // Usually bit 5 is unused
+        } flags;
 
         void reset(Memory& memory);
 
         Byte fetchByte(u32& clock_cycles, Memory& memory);
         //Byte readByte(u32& clock_cycles, Memory& memory, Byte address);
-        Byte readByte(u32& clock_cycles, Memory& memory, Word address);
+        static Byte readByte(u32& clock_cycles, Memory& memory, Word address);
 
         Word fetchWord(u32& clock_cycles, Memory& memory);
 
-        Word readWord(u32& clock_cycles, Memory& memory, Word address);
+        static Word readWord(u32& clock_cycles, Memory& memory, Word address);
 
         void execute(u32 cycles, Memory& memory);
 
         // *** Load Registers ***
         void setRegisterFlag(Byte& reg);
-        // LDA
-        void checkLDA(u32& cycles, Memory& memory, Byte& ins);
-        // LDX
-        void checkLDX(u32& cycles, Memory& memory, Byte& ins);
-        // LDX
-        void checkLDY(u32& cycles, Memory& memory, Byte& ins);
+        void loadRegister(u32& clock_cycles, Memory& memory, Byte& reg);
+        void loadZPRegister(u32& clock_cycles, Memory& memory, Byte& reg);
+        void loadZPOffsetRegister(u32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void loadAbsRegister(u32& clock_cycles, Memory& memory, Byte& reg);
+        void loadAbsOffsetRegister(u32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
 
-        // *** Store Registers ***
-        void checkSTA(u32& cycles, Memory& memory, Byte& ins);
+        // LDA Only
+        void loadIndirectXRegister(u32& clock_cycles, Memory& memory, Byte& reg);
+        void loadIndirectYRegister(u32& clock_cycles, Memory& memory, Byte& reg);
     };
 
+    // Opcode dispatch table
+    using InstructionHandler = void (*)(CPU& cpu, u32& cycles, Memory& memory);
+    static constexpr int OPCODE_COUNT = 256;
+    inline InstructionHandler dispatch_table[OPCODE_COUNT] = { nullptr };
+
+    void initDispatchTable();
+
+    // Wrapper functions - LDA
+    inline void handle_LDA_IM(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadRegister(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_LDA_ZP(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadZPRegister(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_LDA_ZPX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadZPOffsetRegister(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_LDA_ABS(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsRegister(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_LDA_ABSX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsOffsetRegister(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_LDA_ABSY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsOffsetRegister(cycles, memory, cpu.Accumulator, cpu.Y_reg);
+    }
+    inline void handle_LDA_INDX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadIndirectXRegister(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_LDA_INDY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadIndirectYRegister(cycles, memory, cpu.Accumulator);
+    }
 
 };
 

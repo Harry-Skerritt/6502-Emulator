@@ -14,10 +14,12 @@ int main() {
 
     memory.data[0xFFFC] = 0xB5;
     memory.data[0xFFFD] = 0x80;
-    memory.data[0x008F] = 0x96;
+    memory.data[0x008f] = 0x96;
 
     memory.dumpMemory();
     memory.dumpMemory(0xFF00, 256);
+
+    //memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
 
     outputByte(cpu.Accumulator, "A Register Before: ");
 
@@ -25,6 +27,8 @@ int main() {
     cpu.execute(4, memory);
 
     outputByte(cpu.Accumulator, "A Register After: ");
+
+
 
 
 
