@@ -12,19 +12,20 @@ int main() {
 
     cpu.X_reg = 0x0f;
 
-    memory.data[0xFFFC] = 0xB5;
-    memory.data[0xFFFD] = 0x80;
-    memory.data[0x008f] = 0x96;
+    memory.data[0xFFFC] = 0x20;
+    memory.data[0xFFFD] = 0xB2;
+    memory.data[0x00B2] = 0xA9;
+    memory.data[0x00B3] = 0x89;
 
-    memory.dumpMemory();
-    memory.dumpMemory(0xFF00, 256);
+    //memory.dumpMemory();
+    //memory.dumpMemory(0xFF00, 256);
 
-    memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
+    //memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
 
     outputByte(cpu.Accumulator, "A Register Before: ");
 
 
-    cpu.execute(4, memory);
+    cpu.execute(8, memory);
 
     outputByte(cpu.Accumulator, "A Register After: ");
 

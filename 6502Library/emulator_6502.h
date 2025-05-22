@@ -44,8 +44,13 @@ namespace  emulator_6502 {
         void initMemory();
         //void loadMemory(std::string& loc);
 
+        // Memory Dumps
         void dumpMemory(size_t start = 0, size_t length = 256);
         void dumpMemoryToFile(size_t start = 0, size_t length = 256);
+
+        // Writing
+        void writeWord(u32& clock_cycles, u32 address, Word value);
+
 
     };
 
@@ -88,6 +93,9 @@ namespace  emulator_6502 {
         Word getIndirectXAddr(u32& clock_cycles, Memory& memory);
         Word getIndirectYAddr(u32& clock_cycles, Memory& memory);
 
+        // *** Stack Helpers ***
+        void pushToStack(u32& clock_cycles, Memory& memory, Word value);
+
 
         // *** Load Registers ***
         void setRegisterFlag(Byte& reg);
@@ -115,6 +123,9 @@ namespace  emulator_6502 {
         // *** Register Transfers ***
         void transferRegister(u32& clock_cycles, Memory& memory, Byte& reg_from, Byte& reg_to);
 
+
+        // *** Jumps & Calls ***
+        void jumpToSubroutine(u32& clock_cycles, Memory& memory);
     };
 
     // Opcode dispatch table
@@ -241,6 +252,11 @@ namespace  emulator_6502 {
     }
     inline void handle_TYA(CPU& cpu, u32& cycles, Memory& memory) {
         cpu.transferRegister(cycles, memory, cpu.Y_reg, cpu.Accumulator);
+    }
+
+    // Wrapper functions - Jumps and Calls
+    inline void handle_JSR(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.jumpToSubroutine(cycles, memory);
     }
 
 };

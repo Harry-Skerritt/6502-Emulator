@@ -84,6 +84,8 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x8A] = handle_TXA;
     dispatch_table[0x98] = handle_TYA;
 
+    // Jumps and Calls
+    dispatch_table[0x20] = handle_JSR;
 
 }
 
@@ -197,6 +199,12 @@ void emulator_6502::Memory::dumpMemoryToFile(size_t start, size_t length) {
     std::cout << "Memory dump saved to: " << filePath << '\n';
 }
 
+// Write a word to the specified memory address
+void emulator_6502::Memory::writeWord(u32 &clock_cycles, u32 address, Word value) {
+    data[address] = value & 0xFF;
+    data[address + 1] = (value >> 8);
+    clock_cycles -= 2;
+}
 
 
 
@@ -315,6 +323,13 @@ emulator_6502::Word emulator_6502::CPU::getIndirectYAddr(u32 &clock_cycles, Memo
     return useful_y_addr;
 }
 
+// *** Stack Helpers ***
+// Writes the value to the top of the stack
+void emulator_6502::CPU::pushToStack(u32 &clock_cycles, Memory &memory, Word value) {
+    memory.writeWord(clock_cycles, SP, value);
+    SP += 2;
+}
+
 // *** Load Registers ***
 // Sets the processor status flags for LD_ instructions
 void emulator_6502::CPU::setRegisterFlag(Byte& reg) {
@@ -415,6 +430,14 @@ void emulator_6502::CPU::transferRegister(u32 &clock_cycles, Memory &memory, Byt
 }
 
 
+
+// *** Jumps and Calls ***
+void emulator_6502::CPU::jumpToSubroutine(u32 &clock_cycles, Memory &memory) {
+    Word subroutine_addr = fetchWord(clock_cycles, memory);
+    pushToStack(clock_cycles, memory, PC-1);
+    PC = subroutine_addr;
+    clock_cycles--;
+}
 
 
 
