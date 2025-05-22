@@ -35,6 +35,7 @@ void emulator_6502::outputWord(Word value, const std::string& before_text, bool 
 
 // Initialises the dispatch table to handle opcodes
 void emulator_6502::initDispatchTable() {
+    // LDA
     dispatch_table[0xA9] = handle_LDA_IM;
     dispatch_table[0xA5] = handle_LDA_ZP;
     dispatch_table[0xB5] = handle_LDA_ZPX;
@@ -43,6 +44,20 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0xB9] = handle_LDA_ABSY;
     dispatch_table[0xA1] = handle_LDA_INDX;
     dispatch_table[0xB1] = handle_LDA_INDY;
+
+    // LDX
+    dispatch_table[0xA2] = handle_LDX_IM;
+    dispatch_table[0xA6] = handle_LDX_ZP;
+    dispatch_table[0xB6] = handle_LDX_ZPY;
+    dispatch_table[0xAE] = handle_LDX_ABS;
+    dispatch_table[0xBE] = handle_LDX_ABSY;
+
+    // LDY
+    dispatch_table[0xA0] = handle_LDY_IM;
+    dispatch_table[0xA4] = handle_LDY_ZP;
+    dispatch_table[0xB4] = handle_LDY_ZPX;
+    dispatch_table[0xAC] = handle_LDY_ABS;
+    dispatch_table[0xBC] = handle_LDY_ABSX;
 
 }
 

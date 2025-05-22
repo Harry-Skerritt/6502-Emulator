@@ -126,6 +126,42 @@ namespace  emulator_6502 {
         cpu.loadIndirectYRegister(cycles, memory, cpu.Accumulator);
     }
 
+    // Wrapper functions - LDX
+    inline void handle_LDX_IM(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadRegister(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_LDX_ZP(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadZPRegister(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_LDX_ZPY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadZPOffsetRegister(cycles, memory, cpu.X_reg, cpu.Y_reg);
+    }
+    inline void handle_LDX_ABS(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsRegister(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_LDX_ABSY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsOffsetRegister(cycles, memory, cpu.X_reg, cpu.Y_reg);
+    }
+
+    // Wrapper functions - LDY
+    inline void handle_LDY_IM(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadRegister(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_LDY_ZP(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadZPRegister(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_LDY_ZPX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadZPOffsetRegister(cycles, memory, cpu.Y_reg, cpu.X_reg);
+    }
+    inline void handle_LDY_ABS(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsRegister(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_LDY_ABSX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadAbsOffsetRegister(cycles, memory, cpu.Y_reg, cpu.X_reg);
+    }
+
+
+
 };
 
 class InvalidInstructionException : public std::exception {
