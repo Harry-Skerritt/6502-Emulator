@@ -130,9 +130,12 @@ namespace  emulator_6502 {
 
         // *** Stack Operations ***
         void pushAccumulator(s32& clock_cycles, Memory& memory);
+        void pushProcessorStatus(s32& clock_cycles, Memory& memory);
         void pullAccumulator(s32& clock_cycles, Memory& memory);
 
         // *** Jumps & Calls ***
+        void jumpAbsolute(s32& clock_cycles, Memory& memory);
+        void jumpIndirect(s32& clock_cycles, Memory& memory);
         void jumpToSubroutine(s32& clock_cycles, Memory& memory);
         void returnFromSubroutine(s32& clock_cycles, Memory& memory);
     };
@@ -285,6 +288,12 @@ namespace  emulator_6502 {
 
 
     // Wrapper functions - Jumps and Calls
+    inline void handle_JMP_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.jumpAbsolute(cycles, memory);
+    }
+    inline void handle_JMP_IND(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.jumpIndirect(cycles, memory);
+    }
     inline void handle_JSR(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.jumpToSubroutine(cycles, memory);
     }

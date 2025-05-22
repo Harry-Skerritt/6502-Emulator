@@ -29,7 +29,6 @@ int main() {
     outputByte(cpu.Accumulator, "A Register Before: ");
     outputByte(cpu.X_reg, "X Register Before: ");
 
-
     cpu.execute(16, memory);
 
     outputByte(cpu.Accumulator, "A Register After: ");

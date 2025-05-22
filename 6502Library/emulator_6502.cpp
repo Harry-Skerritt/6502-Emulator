@@ -94,6 +94,8 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x28] = handle_PLP;
 
     // Jumps and Calls
+    dispatch_table[0x4C] = handle_JMP_ABS;
+    dispatch_table[0x6c] = handle_JMP_IND;
     dispatch_table[0x20] = handle_JSR;
     dispatch_table[0x60] = handle_RTS;
 
@@ -467,21 +469,41 @@ void CPU::transferRegister(s32 &clock_cycles, Memory &memory, Byte &reg_from, By
 
 
 // *** Stack Operations ***
+// Pushes the 8-bit value of the accumulator to the Stack as a 16 bit value
 void CPU::pushAccumulator(s32 &clock_cycles, Memory &memory) {
-    pushToStack(clock_cycles, memory, Accumulator);
-    clock_cycles--;
+    pushToStack_8(clock_cycles, memory, Accumulator);
+    clock_cycles -= 2; // Todo: This doesnt seem right
 }
 
+void CPU::pushProcessorStatus(s32 &clock_cycles, Memory &memory) {
+
+}
+
+// Pulls an 8-bit value from the stack and puts it into the accumulator
 void CPU::pullAccumulator(s32 &clock_cycles, Memory &memory) {
     Byte value = pullFromStack_8(clock_cycles, memory);
     Accumulator = value;
-    clock_cycles -= 2;
+    clock_cycles -= 2; // Todo: This doesnt seem right
     setRegisterFlag(Accumulator);
 }
 
 
 
 // *** Jumps and Calls ***
+// Sets the program counter to the value in the next byte of memory
+void CPU::jumpAbsolute(s32 &clock_cycles, Memory &memory) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    PC = abs_addr;
+}
+
+// Sets the program counter to the value stored at the address of the next value in memory
+void CPU::jumpIndirect(s32 &clock_cycles, Memory &memory) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    abs_addr = readWord(clock_cycles, memory, abs_addr);
+    PC = abs_addr;
+}
+
+// Jumps to a subroutine defined at the next memory address by utilising the stack
 void CPU::jumpToSubroutine(s32 &clock_cycles, Memory &memory) {
     Word subroutine_addr = fetchWord(clock_cycles, memory);
     pushToStack(clock_cycles, memory, PC-1);
@@ -489,6 +511,7 @@ void CPU::jumpToSubroutine(s32 &clock_cycles, Memory &memory) {
     clock_cycles--;
 }
 
+// Returns to the point before a subroutine
 void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
     Word return_addr = pullFromStack(clock_cycles, memory);
     PC = return_addr + 1;
