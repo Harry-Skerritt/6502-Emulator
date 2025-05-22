@@ -78,6 +78,13 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x94] = handle_STY_ZPX;
     dispatch_table[0x8C] = handle_STY_ABS;
 
+    // Register Transfers
+    dispatch_table[0xAA] = handle_TAX;
+    dispatch_table[0xA8] = handle_TAY;
+    dispatch_table[0x8A] = handle_TXA;
+    dispatch_table[0x98] = handle_TYA;
+
+
 }
 
 
@@ -259,6 +266,7 @@ emulator_6502::Word emulator_6502::CPU::readWord(u32& clock_cycles, Memory& memo
 
 
 // *** Writing to memory ***
+// Writes the byte 'value' to the memory address specified
 void emulator_6502::CPU::writeByte(u32 &clock_cycles, Memory &memory, Word address, Byte value) {
     memory[address] = value;
     clock_cycles--;
@@ -398,6 +406,13 @@ void emulator_6502::CPU::storeRegisterIndirectY(u32 &clock_cycles, Memory &memor
     writeByte(clock_cycles, memory, indirect_addr, reg);
 }
 
+// *** Register Transfers ***
+// Transfers the value from 'reg_from' to 'reg_to' (2 clock cycles)
+void emulator_6502::CPU::transferRegister(u32 &clock_cycles, Memory &memory, Byte &reg_from, Byte &reg_to) {
+    Byte reg1_val = readByte(clock_cycles, memory, reg_from);
+    writeByte(clock_cycles, memory, reg_to, reg1_val);
+    setRegisterFlag(reg_to);
+}
 
 
 

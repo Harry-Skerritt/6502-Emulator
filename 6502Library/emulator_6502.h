@@ -112,6 +112,9 @@ namespace  emulator_6502 {
         void storeRegisterIndirectX(u32& clock_cycles, Memory& memory, Byte& reg);
         void storeRegisterIndirectY(u32& clock_cycles, Memory& memory, Byte& reg);
 
+        // *** Register Transfers ***
+        void transferRegister(u32& clock_cycles, Memory& memory, Byte& reg_from, Byte& reg_to);
+
     };
 
     // Opcode dispatch table
@@ -226,6 +229,19 @@ namespace  emulator_6502 {
         cpu.storeAbsRegister(cycles, memory, cpu.Y_reg);
     }
 
+    // Wrapper functions - Transfer Registers
+    inline void handle_TAX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.transferRegister(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_TAY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.transferRegister(cycles, memory, cpu.Accumulator, cpu.Y_reg);
+    }
+    inline void handle_TXA(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.transferRegister(cycles, memory, cpu.X_reg, cpu.Accumulator);
+    }
+    inline void handle_TYA(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.transferRegister(cycles, memory, cpu.Y_reg, cpu.Accumulator);
+    }
 
 };
 
