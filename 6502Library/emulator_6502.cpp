@@ -59,6 +59,25 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0xAC] = handle_LDY_ABS;
     dispatch_table[0xBC] = handle_LDY_ABSX;
 
+    // STA
+    dispatch_table[0x85] = handle_STA_ZP;
+    dispatch_table[0x95] = handle_STA_ZPX;
+    dispatch_table[0x8D] = handle_STA_ABS;
+    dispatch_table[0x9D] = handle_STA_ABSX;
+    dispatch_table[0x99] = handle_STA_ABSY;
+    dispatch_table[0x81] = handle_STA_INDX;
+    dispatch_table[0x91] = handle_STA_INDY;
+
+    // STX
+    dispatch_table[0x86] = handle_STX_ZP;
+    dispatch_table[0x96] = handle_STX_ZPY;
+    dispatch_table[0x8E] = handle_STX_ABS;
+
+    // STY
+    dispatch_table[0x84] = handle_STY_ZP;
+    dispatch_table[0x94] = handle_STY_ZPX;
+    dispatch_table[0x8C] = handle_STY_ABS;
+
 }
 
 
@@ -66,8 +85,8 @@ void emulator_6502::initDispatchTable() {
 
 // Initializes memory to 0x0000
 void emulator_6502::Memory::initMemory() {
-    for (u32 i = 0; i < MAX_MEMORY; i++) {
-        data[i] = 0x0000;
+    for (unsigned char & i : data) {
+        i = 0;
     }
 
     std::cout << "Memory initialized" << std::endl;
@@ -110,7 +129,7 @@ void emulator_6502::Memory::dumpMemory(size_t start, size_t length) {
     std::cout << "Memory Dump End ###" << std::endl;
 }
 
-// Dumps the given memory section to the a file
+// Dumps the given memory section to the file
 void emulator_6502::Memory::dumpMemoryToFile(size_t start, size_t length) {
     namespace fs = std::filesystem;
 
@@ -186,9 +205,11 @@ void emulator_6502::CPU::reset(Memory& memory) {
 
     Accumulator = X_reg = Y_reg = 0;
     flags = {}; // Resets flags to zero
+    flags.unused = 1; // This is always set
     memory.initMemory();
 }
 
+// *** Reading from memory ***
 // Gets and returns the Byte value at PC, increments PC
 emulator_6502::Byte emulator_6502::CPU::fetchByte(u32& clock_cycles, Memory& memory) {
     Byte data = memory[PC];
@@ -215,7 +236,6 @@ emulator_6502::Byte emulator_6502::CPU::readByte(u32 &clock_cycles, Memory &memo
     return data;
 }
 
-
 // Gets and returns the Word value at PC, increments PC
 emulator_6502::Word emulator_6502::CPU::fetchWord(u32& clock_cycles, Memory& memory) {
     // Note: Little Endian
@@ -238,6 +258,12 @@ emulator_6502::Word emulator_6502::CPU::readWord(u32& clock_cycles, Memory& memo
 }
 
 
+// *** Writing to memory ***
+void emulator_6502::CPU::writeByte(u32 &clock_cycles, Memory &memory, Word address, Byte value) {
+    memory[address] = value;
+    clock_cycles--;
+}
+
 
 // Executes the specified cycle amount of cycles on the 6502
 void emulator_6502::CPU::execute(u32 cycles, Memory& memory) {
@@ -253,19 +279,40 @@ void emulator_6502::CPU::execute(u32 cycles, Memory& memory) {
         if (handler) {
             handler(*this, cycles, memory);
         } else {
+            memory.dumpMemoryToFile(0, emulator_6502::Memory::MAX_MEMORY); // Dump full memory to file
             throw InvalidInstructionException(PC -1);
         }
     }
 
 }
 
+// *** Address Helpers ***
+// Gets the indirect addressing method address for the x register
+emulator_6502::Word emulator_6502::CPU::getIndirectXAddr(u32 &clock_cycles, Memory &memory) {
+    Byte zp_address = fetchByte(clock_cycles, memory);
+    zp_address += X_reg;
+    clock_cycles--;
+    Word useful_addr = readWord(clock_cycles, memory, zp_address);
+    return useful_addr;
+}
+
+// Gets the indirect addressing method address for the y register
+emulator_6502::Word emulator_6502::CPU::getIndirectYAddr(u32 &clock_cycles, Memory &memory) {
+    Byte zp_address = fetchByte(clock_cycles, memory);
+    Word useful_addr = readWord(clock_cycles, memory, zp_address);
+    Word useful_y_addr = useful_addr + Y_reg;
+    if (useful_y_addr - useful_addr >= 0xFF) {
+        clock_cycles--;
+    }
+    return useful_y_addr;
+}
+
 // *** Load Registers ***
-// Sets the processor status flags for LDA instructions
+// Sets the processor status flags for LD_ instructions
 void emulator_6502::CPU::setRegisterFlag(Byte& reg) {
     flags.Z = (reg == 0);
     flags.N = (reg & 0b1000000) > 0;
 }
-
 
 void emulator_6502::CPU::loadRegister(u32 &clock_cycles, Memory &memory, Byte &reg) {
     reg = fetchByte(clock_cycles, memory);
@@ -305,22 +352,54 @@ void emulator_6502::CPU::loadAbsOffsetRegister(u32 &clock_cycles, Memory &memory
 }
 
 void emulator_6502::CPU::loadIndirectXRegister(u32 &clock_cycles, Memory &memory, Byte &reg) {
-    Byte zp_addr = fetchByte(clock_cycles, memory);
-    zp_addr += X_reg;
-    clock_cycles--;
-    Word useful_addr = readWord(clock_cycles, memory, zp_addr);
-    reg = readByte(clock_cycles, memory, useful_addr);
+    Word indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    reg = readByte(clock_cycles, memory, indirect_addr);
 }
 
 void emulator_6502::CPU::loadIndirectYRegister(u32 &clock_cycles, Memory &memory, Byte &reg) {
-    Byte zp_addr = fetchByte(clock_cycles, memory);
-    Word useful_addr = readWord(clock_cycles, memory, zp_addr);
-    Word useful_addr_y = useful_addr + Y_reg;
-    reg = readByte(clock_cycles, memory, useful_addr_y);
-    if (useful_addr - useful_addr_y >= 0xFF) {
-        clock_cycles--;
-    }
+    Word indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    reg = readByte(clock_cycles, memory, indirect_addr);
 }
+
+
+// *** Store Registers ***
+void emulator_6502::CPU::storeRegisterZP(u32 &clock_cycles, Memory &memory, Byte &reg) {
+    Word zp_addr = fetchWord(clock_cycles, memory);
+    writeByte(clock_cycles, memory, zp_addr, reg);
+}
+
+void emulator_6502::CPU::storeRegisterZPOffset(u32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Word zp_addr = fetchWord(clock_cycles, memory);
+    zp_addr += offset;
+    clock_cycles--;
+
+    writeByte(clock_cycles, memory, zp_addr, reg);
+}
+
+void emulator_6502::CPU::storeAbsRegister(u32 &clock_cycles, Memory &memory, Byte &reg) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    writeByte(clock_cycles, memory, abs_addr, reg);
+}
+
+void emulator_6502::CPU::storeAbsOffsetRegister(u32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_offset = abs_addr + offset;
+    clock_cycles--;
+    writeByte(clock_cycles, memory, abs_offset, reg);
+}
+
+void emulator_6502::CPU::storeRegisterIndirectX(u32 &clock_cycles, Memory &memory, Byte &reg) {
+    Word indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    writeByte(clock_cycles, memory, indirect_addr, reg);
+}
+
+void emulator_6502::CPU::storeRegisterIndirectY(u32 &clock_cycles, Memory &memory, Byte &reg) {
+    Word indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    writeByte(clock_cycles, memory, indirect_addr, reg);
+}
+
+
+
 
 
 

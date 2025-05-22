@@ -19,7 +19,7 @@ int main() {
     memory.dumpMemory();
     memory.dumpMemory(0xFF00, 256);
 
-    //memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
+    memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
 
     outputByte(cpu.Accumulator, "A Register Before: ");
 

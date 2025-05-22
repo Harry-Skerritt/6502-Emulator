@@ -70,15 +70,24 @@ namespace  emulator_6502 {
 
         void reset(Memory& memory);
 
+        // Reading
         Byte fetchByte(u32& clock_cycles, Memory& memory);
         //Byte readByte(u32& clock_cycles, Memory& memory, Byte address);
         static Byte readByte(u32& clock_cycles, Memory& memory, Word address);
 
         Word fetchWord(u32& clock_cycles, Memory& memory);
-
         static Word readWord(u32& clock_cycles, Memory& memory, Word address);
 
+        // Writing
+        static void writeByte(u32& clock_cycles, Memory& memory, Word address, Byte value);
+
+
         void execute(u32 cycles, Memory& memory);
+
+        // *** Address Helpers ***
+        Word getIndirectXAddr(u32& clock_cycles, Memory& memory);
+        Word getIndirectYAddr(u32& clock_cycles, Memory& memory);
+
 
         // *** Load Registers ***
         void setRegisterFlag(Byte& reg);
@@ -91,6 +100,18 @@ namespace  emulator_6502 {
         // LDA Only
         void loadIndirectXRegister(u32& clock_cycles, Memory& memory, Byte& reg);
         void loadIndirectYRegister(u32& clock_cycles, Memory& memory, Byte& reg);
+
+
+        // *** Store Registers ***
+        void storeRegisterZP(u32& clock_cycles, Memory& memory, Byte& reg);
+        void storeRegisterZPOffset(u32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void storeAbsRegister(u32& clock_cycles, Memory& memory, Byte& reg);
+        void storeAbsOffsetRegister(u32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+
+        // STA Only
+        void storeRegisterIndirectX(u32& clock_cycles, Memory& memory, Byte& reg);
+        void storeRegisterIndirectY(u32& clock_cycles, Memory& memory, Byte& reg);
+
     };
 
     // Opcode dispatch table
@@ -160,6 +181,50 @@ namespace  emulator_6502 {
         cpu.loadAbsOffsetRegister(cycles, memory, cpu.Y_reg, cpu.X_reg);
     }
 
+    // Wrapper functions - STA
+    inline void handle_STA_ZP(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeRegisterZP(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_STA_ZPX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeRegisterZPOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_STA_ABS(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeAbsRegister(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_STA_ABSX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeAbsOffsetRegister(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_STA_ABSY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeAbsOffsetRegister(cycles, memory, cpu.Accumulator, cpu.Y_reg);
+    }
+    inline void handle_STA_INDX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadIndirectXRegister(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_STA_INDY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.loadIndirectYRegister(cycles, memory, cpu.Accumulator);
+    }
+
+    // Wrapper functions - STX
+    inline void handle_STX_ZP(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeRegisterZP(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_STX_ZPY(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeRegisterZPOffset(cycles, memory, cpu.X_reg, cpu.Y_reg);
+    }
+    inline void handle_STX_ABS(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeAbsRegister(cycles, memory, cpu.X_reg);
+    }
+
+    // Wrapper functions - STY
+    inline void handle_STY_ZP(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeRegisterZP(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_STY_ZPX(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeRegisterZPOffset(cycles, memory, cpu.Y_reg, cpu.X_reg);
+    }
+    inline void handle_STY_ABS(CPU& cpu, u32& cycles, Memory& memory) {
+        cpu.storeAbsRegister(cycles, memory, cpu.Y_reg);
+    }
 
 
 };
