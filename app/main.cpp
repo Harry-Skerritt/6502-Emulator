@@ -10,7 +10,7 @@ int main() {
 
     cpu.reset(memory);
 
-    cpu.X = 0x0f;
+    cpu.X_reg = 0x0f;
 
     memory.data[0xFFFC] = 0xB5;
     memory.data[0xFFFD] = 0x80;
@@ -19,12 +19,12 @@ int main() {
     memory.dumpMemory();
     memory.dumpMemory(0xFF00, 256);
 
-    outputByte(cpu.A, "A Register Before: ");
+    outputByte(cpu.Accumulator, "A Register Before: ");
 
 
     cpu.execute(4, memory);
 
-    outputByte(cpu.A, "A Register After: ");
+    outputByte(cpu.Accumulator, "A Register After: ");
 
 
 
