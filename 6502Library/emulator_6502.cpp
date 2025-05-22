@@ -85,6 +85,14 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x8A] = handle_TXA;
     dispatch_table[0x98] = handle_TYA;
 
+    // Stack Operations
+    dispatch_table[0xBA] = handle_TSX;
+    dispatch_table[0x9A] = handle_TXS;
+    dispatch_table[0x48] = handle_PHA;
+    dispatch_table[0x08] = handle_PHP;
+    dispatch_table[0x68] = handle_PLA;
+    dispatch_table[0x28] = handle_PLP;
+
     // Jumps and Calls
     dispatch_table[0x20] = handle_JSR;
     dispatch_table[0x60] = handle_RTS;
@@ -329,16 +337,30 @@ Word CPU::pointerToAddress() const {
     return 0x100 | SP;
 }
 
-// Writes the value to the top of the stack
+// Writes the value to the top of the stack as a 16-bit word
 void CPU::pushToStack(s32 &clock_cycles, Memory &memory, Word value) {
     memory.writeWord(clock_cycles, pointerToAddress()-1, value);
     SP -= 2;
 }
+// Writes the value to the top of the stack as an 8-bit byte
+void CPU::pushToStack_8(s32 &clock_cycles, Memory &memory, Word value) {
+    writeByte(clock_cycles, memory, pointerToAddress(), value);
+    SP--;
+}
 
-// Pulls the top most value from the stack and returns it
+
+// Pulls the top most value from the stack and returns it as a 16-bit word
 Word CPU::pullFromStack(s32 &clock_cycles, Memory &memory) {
     Word stack_value = readWord(clock_cycles, memory, pointerToAddress()+1);
     SP += 2;
+    clock_cycles--;
+    return stack_value;
+}
+
+// Pulls the top most value from the stack and returns it as a 8-bit byte
+Byte CPU::pullFromStack_8(s32 &clock_cycles, Memory &memory) {
+    Byte stack_value = readByte(clock_cycles, memory, pointerToAddress());
+    SP++;
     clock_cycles--;
     return stack_value;
 }
@@ -441,6 +463,20 @@ void CPU::transferRegister(s32 &clock_cycles, Memory &memory, Byte &reg_from, By
     Byte reg1_val = readByte(clock_cycles, memory, reg_from);
     writeByte(clock_cycles, memory, reg_to, reg1_val);
     setRegisterFlag(reg_to);
+}
+
+
+// *** Stack Operations ***
+void CPU::pushAccumulator(s32 &clock_cycles, Memory &memory) {
+    pushToStack(clock_cycles, memory, Accumulator);
+    clock_cycles--;
+}
+
+void CPU::pullAccumulator(s32 &clock_cycles, Memory &memory) {
+    Byte value = pullFromStack_8(clock_cycles, memory);
+    Accumulator = value;
+    clock_cycles -= 2;
+    setRegisterFlag(Accumulator);
 }
 
 

@@ -97,7 +97,9 @@ namespace  emulator_6502 {
         // *** Stack Helpers ***
         Word pointerToAddress() const;
         void pushToStack(s32& clock_cycles, Memory& memory, Word value);
+        void pushToStack_8(s32& clock_cycles, Memory& memory, Word value);
         Word pullFromStack(s32& clock_cycles, Memory& memory);
+        Byte pullFromStack_8(s32& clock_cycles, Memory& memory);
 
 
         // *** Load Registers ***
@@ -123,9 +125,12 @@ namespace  emulator_6502 {
         void storeRegisterIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
         void storeRegisterIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
 
-        // *** Register Transfers ***
+        // *** Register Transfers / SP Transfers ***
         void transferRegister(s32& clock_cycles, Memory& memory, Byte& reg_from, Byte& reg_to);
 
+        // *** Stack Operations ***
+        void pushAccumulator(s32& clock_cycles, Memory& memory);
+        void pullAccumulator(s32& clock_cycles, Memory& memory);
 
         // *** Jumps & Calls ***
         void jumpToSubroutine(s32& clock_cycles, Memory& memory);
@@ -257,6 +262,27 @@ namespace  emulator_6502 {
     inline void handle_TYA(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.transferRegister(cycles, memory, cpu.Y_reg, cpu.Accumulator);
     }
+
+    // Wrapper functions - Stack Pointer Operations
+    inline void handle_TSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.transferRegister(cycles, memory, cpu.SP, cpu.X_reg);
+    }
+    inline void handle_TXS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.transferRegister(cycles, memory, cpu.X_reg, cpu.SP);
+    }
+    inline void handle_PHA(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.pushAccumulator(cycles, memory);
+    }
+    inline void handle_PHP(CPU& cpu, s32& cycles, Memory& memory) {
+        //Todo: Push Processor status
+    }
+    inline void handle_PLA(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.pullAccumulator(cycles, memory);
+    }
+    inline void handle_PLP(CPU& cpu, s32& cycles, Memory& memory) {
+        //Todo: Pull processor status
+    }
+
 
     // Wrapper functions - Jumps and Calls
     inline void handle_JSR(CPU& cpu, s32& cycles, Memory& memory) {
