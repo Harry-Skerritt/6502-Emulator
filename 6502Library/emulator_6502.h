@@ -44,7 +44,9 @@ namespace  emulator_6502 {
 
         void initMemory();
         void setMemory(Byte to_set);
-        //void loadMemory(std::string& loc);
+        bool loadMemory(std::string& loc);
+
+        void promptMemoryLoad();
 
         // Memory Dumps
         void dumpMemory(size_t start = 0, size_t length = 256);
@@ -300,6 +302,11 @@ namespace  emulator_6502 {
     }
     inline void handle_RTS(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.returnFromSubroutine(cycles, memory);
+    }
+
+    // Wrapper function - System Functions
+    inline void handle_NOP(CPU& cpu, s32& cycles, Memory& memory) {
+        cycles--;
     }
 
 };

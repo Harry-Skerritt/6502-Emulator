@@ -99,6 +99,8 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x20] = handle_JSR;
     dispatch_table[0x60] = handle_RTS;
 
+    // System Functions
+    dispatch_table[0xEA] = handle_NOP;
 }
 
 
@@ -120,6 +122,63 @@ void Memory::setMemory(Byte to_set) {
 
     outputByte(to_set, "Memory Set to: ");
 }
+
+// Loads a .bin file into the memory
+bool Memory::loadMemory(std::string &loc) {
+    std::ifstream file(loc, std::ios::binary);
+    if (!file) {
+        std::cerr << "Unable to open file: " << loc << std::endl;
+        return false;
+    }
+
+    file.read(reinterpret_cast<char*>(data), MAX_MEMORY);
+    std::streamsize bytes_read = file.gcount();
+
+    if (bytes_read == 0) {
+        std::cerr << "Warning: File is empty or could not be read " << loc << std::endl;
+        return false;
+    }
+
+    std::cout << "Loaded " << bytes_read << " bytes into memory" << std::endl;
+    return true;
+}
+
+// Function to help the user in loading memory.
+void Memory::promptMemoryLoad() {
+    std::string input;
+    std::cout << "Would you like to load a file? (y/n): ";
+    std::getline(std::cin, input);
+
+    if (!input.empty() && input[0] == 'y' || input[0] == 'Y') {
+        std::cout << "Enter full file path: ";
+        std::getline(std::cin, input);
+        if (!loadMemory(input)) {
+            std::cerr << "Failed to load file: " << input << std::endl;
+        }
+    } else {
+        std::cout << "Enter value to initalise memory (press enter for 0x00): ";
+        std::getline(std::cin, input);
+        if (input.empty()) {
+            initMemory();
+        } else {
+            std::istringstream iss(input);
+            int value;
+            if ((input.rfind("0x", 0) == 0 || input.rfind("0X", 0) == 0)) {
+                iss >> std::hex >> value;
+            } else {
+                iss >> value;
+            }
+
+            if (iss.fail() || value < 0 || value > 255) {
+                std::cerr << "Invalid input. Using 0x00." << std::endl;
+                value = 0;
+            }
+
+            setMemory(static_cast<Byte>(value));
+        }
+    }
+}
+
 
 // Dumps the given memory section to the console
 void Memory::dumpMemory(size_t start, size_t length) {
