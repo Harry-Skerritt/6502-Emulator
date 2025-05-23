@@ -112,6 +112,10 @@ namespace  emulator_6502 {
         Word getIndirectXAddr(s32& clock_cycles, Memory& memory);
         Word getIndirectYAddr(s32& clock_cycles, Memory& memory);
 
+        Word getAbsoluteAddr(s32& clock_cycles, Memory& memory);
+        Word getAbsoluteAddrOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        Word getAbsoluteAddrOffset_NP(s32& clock_cycles, Memory& memory, Byte& offset);
+
         // *** Stack Helpers ***
         [[nodiscard]] Word pointerToAddress() const;
         void pushToStack(s32& clock_cycles, Memory& memory, Word value);
@@ -152,12 +156,38 @@ namespace  emulator_6502 {
         void pullAccumulator(s32& clock_cycles, Memory& memory);
         void pullProcessorStatus(s32& clock_cycles, Memory& memory);
 
+        // *** Logical ***
+
+        // *** Arithmetic ***
+
+        // *** Increments and Decrements ***
+        void incrementRegister(s32& clock_cycles, Memory& memory, Byte& reg);
+        void decrementRegister(s32& clock_cycles, Memory& memory, Byte& reg);
+        void changeMemoryZP(s32& clock_cycles, Memory& memory, bool inc = true);
+        void changeMemoryZPOffset(s32& clock_cycles, Memory& memory, Byte& offset, bool inc = true);
+        void changeMemoryAbs(s32& clock_cycles, Memory& memory, bool inc = true);
+        void changeMemoryAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset, bool inc = true);
+
+        // *** Shifts ***
+
         // *** Jumps & Calls ***
         void jumpAbsolute(s32& clock_cycles, Memory& memory);
         void jumpIndirect(s32& clock_cycles, Memory& memory);
         void jumpToSubroutine(s32& clock_cycles, Memory& memory);
         void returnFromSubroutine(s32& clock_cycles, Memory& memory);
+
+        // *** Branches ***
+
+        // *** Status Flag Changes ***
+
+        // *** System Functions ***
+
     };
+
+    // Returns t/f based on whether a bit is set
+    inline bool isBitSet(Byte value, Byte bitmask) {
+        return (value & bitmask) != 0;
+    }
 
     // Opcode dispatch table
     using InstructionHandler = void (*)(CPU& cpu, s32& cycles, Memory& memory);
@@ -305,6 +335,50 @@ namespace  emulator_6502 {
         cpu.pullProcessorStatus(cycles, memory);
     }
 
+    // Wrapper functions - Logical
+
+    // Wrapper functions - Arithmetic
+
+    // Wrapper functions - Increments and decrements
+    inline void handle_INC_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryZP(cycles, memory);
+    }
+    inline void handle_INC_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryZPOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_INC_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryAbs(cycles, memory);
+    }
+    inline void handle_INC_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryAbsOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_INX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.incrementRegister(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_INY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.incrementRegister(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_DEC_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryZP(cycles, memory, false);
+    }
+    inline void handle_DEC_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryZPOffset(cycles, memory, cpu.X_reg, false);
+    }
+    inline void handle_DEC_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryAbs(cycles, memory, false);
+    }
+    inline void handle_DEC_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.changeMemoryAbsOffset(cycles, memory, cpu.X_reg, false);
+    }
+    inline void handle_DEX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.decrementRegister(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_DEY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.decrementRegister(cycles, memory, cpu.Y_reg);
+    }
+
+    // Wrapper functions - Shifts
+
     // Wrapper functions - Jumps and Calls
     inline void handle_JMP_ABS(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.jumpAbsolute(cycles, memory);
@@ -318,6 +392,10 @@ namespace  emulator_6502 {
     inline void handle_RTS(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.returnFromSubroutine(cycles, memory);
     }
+
+    // Wrapper functions - Branches
+
+    // Wrapper functions - Status Flag Changes
 
     // Wrapper function - System Functions
     inline void handle_NOP(CPU& cpu, s32& cycles, Memory& memory) {

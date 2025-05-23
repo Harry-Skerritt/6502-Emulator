@@ -93,11 +93,36 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x68] = handle_PLA;
     dispatch_table[0x28] = handle_PLP;
 
+    // Logical
+
+    // Arithmetic
+
+    // Increments and Decrements
+    dispatch_table[0xE6] = handle_INC_ZP;
+    dispatch_table[0xF6] = handle_INC_ZPX;
+    dispatch_table[0xEE] = handle_INC_ABS;
+    dispatch_table[0xFE] = handle_INC_ABSX;
+    dispatch_table[0xE8] = handle_INX;
+    dispatch_table[0xC8] = handle_INY;
+    dispatch_table[0xC6] = handle_DEC_ZP;
+    dispatch_table[0xD6] = handle_DEC_ZPX;
+    dispatch_table[0xCE] = handle_DEC_ABS;
+    dispatch_table[0xDE] = handle_DEC_ABSX;
+    dispatch_table[0xCA] = handle_DEX;
+    dispatch_table[0x88] = handle_DEY;
+
+
+    // Shifts
+
     // Jumps and Calls
     dispatch_table[0x4C] = handle_JMP_ABS;
     dispatch_table[0x6c] = handle_JMP_IND;
     dispatch_table[0x20] = handle_JSR;
     dispatch_table[0x60] = handle_RTS;
+
+    // Branches
+
+    // Status Flag Changes
 
     // System Functions
     dispatch_table[0xEA] = handle_NOP;
@@ -316,14 +341,14 @@ Byte CPU::packStatusFlags(StatusFlags flags) {
 // Unpacks the status flags from a byte
 CPU::StatusFlags CPU::unpackStatusFlags(Byte value) {
     StatusFlags flags{};
-    flags.C = value & carry_bit != 0;
-    flags.Z = value & zero_bit != 0;
-    flags.I = value & interrupt_bit != 0;
-    flags.D = value & decimal_bit != 0;
-    flags.B = value & break_bit != 0;
-    flags.unused = value & unused_bit != 0;
-    flags.V = value & overflow_bit != 0;
-    flags.N = value & negative_bit != 0;
+    flags.C = isBitSet(value, carry_bit);
+    flags.Z = isBitSet(value, zero_bit);
+    flags.I = isBitSet(value, interrupt_bit);
+    flags.D = isBitSet(value, decimal_bit);
+    flags.B = isBitSet(value, break_bit);
+    flags.unused = isBitSet(value, unused_bit);
+    flags.V = isBitSet(value, overflow_bit);
+    flags.N = isBitSet(value, negative_bit);
     return flags;
 }
 
@@ -446,6 +471,34 @@ Word CPU::getIndirectYAddr(s32 &clock_cycles, Memory &memory) {
     return useful_y_addr;
 }
 
+// Gets the absolute addressing method address
+Word CPU::getAbsoluteAddr(s32 &clock_cycles, Memory &memory) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    return abs_addr;
+}
+
+// Gets the absolute addressing method address + an offset (handles crossing boundary)
+Word CPU::getAbsoluteAddrOffset(s32 &clock_cycles, Memory &memory, Byte& offset) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_offset = abs_addr + offset;
+    const bool page_crossed = (abs_addr ^ abs_offset) >> 8;
+    if (page_crossed) {
+        clock_cycles--;
+    }
+    return abs_offset;
+}
+
+// Gets the absolute addressing method address + an offset (DOES NOT handle crossing boundary)
+Word CPU::getAbsoluteAddrOffset_NP(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_offset = abs_addr + offset;
+    clock_cycles--;
+    return abs_offset;
+}
+
+
+
+
 // *** Stack Helpers ***
 // Convert the stack pointer as a 16-bit address
 Word CPU::pointerToAddress() const {
@@ -516,20 +569,14 @@ void CPU::loadZPOffsetRegister(s32 &clock_cycles, Memory &memory, Byte &reg, Byt
 }
 
 void CPU::loadAbsRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
-    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_addr = getAbsoluteAddr(clock_cycles, memory);
     reg = readByte(clock_cycles, memory, abs_addr);
     setRegisterFlag(reg);
 }
 
 void CPU::loadAbsOffsetRegister(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
-    Word abs_addr = fetchWord(clock_cycles, memory);
-    Word abs_offset = abs_addr + offset;
+    Word abs_offset = getAbsoluteAddrOffset(clock_cycles, memory, offset);
     reg = readByte(clock_cycles, memory, abs_offset);
-
-    // Handle page jumping
-    if (abs_addr - abs_offset >= 0xFF) {
-        clock_cycles--;
-    }
 }
 
 void CPU::loadIndirectXRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
@@ -558,14 +605,12 @@ void CPU::storeRegisterZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, By
 }
 
 void CPU::storeAbsRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
-    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_addr = getAbsoluteAddr(clock_cycles, memory);
     writeByte(clock_cycles, memory, abs_addr, reg);
 }
 
 void CPU::storeAbsOffsetRegister(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
-    Word abs_addr = fetchWord(clock_cycles, memory);
-    Word abs_offset = abs_addr + offset;
-    clock_cycles--;
+    Word abs_offset = getAbsoluteAddrOffset_NP(clock_cycles, memory, offset);
     writeByte(clock_cycles, memory, abs_offset, reg);
 }
 
@@ -608,6 +653,7 @@ void CPU::pullAccumulator(s32 &clock_cycles, Memory &memory) {
     setRegisterFlag(Accumulator);
 }
 
+// Pulls the processor stats flags from the stack and assigns them
 void CPU::pullProcessorStatus(s32 &clock_cycles, Memory &memory) {
     Byte status = popFromStack_8(clock_cycles, memory);
     flags = unpackStatusFlags(status);
@@ -615,17 +661,100 @@ void CPU::pullProcessorStatus(s32 &clock_cycles, Memory &memory) {
     clock_cycles --;
 }
 
+// *** Logical ***
+
+// *** Arithmetic ***
+
+// *** Increments and Decrements ***
+// Adds 1 to the specified register and assigns flags
+void CPU::incrementRegister(s32 &clock_cycles, Memory &memory, Byte& reg) {
+    reg++;
+    setRegisterFlag(reg);
+    clock_cycles--;
+}
+
+// Takes 1 from the specified register and assigns flags
+void CPU::decrementRegister(s32 &clock_cycles, Memory &memory, Byte& reg) {
+    reg--;
+    setRegisterFlag(reg);
+    clock_cycles--;
+}
+
+// Adds one to the value held at a specified memory location setting the zero and negative flags as appropriate.
+void CPU::changeMemoryZP(s32 &clock_cycles, Memory &memory, bool inc) {
+    Word zp_addr = fetchByte(clock_cycles, memory);
+    Byte zp_value = readByte(clock_cycles, memory, zp_addr);
+
+    if (inc) {
+        zp_value++;
+    } else {
+        zp_value--;
+    }
+
+    clock_cycles--;
+    writeByte(clock_cycles, memory, zp_addr, zp_value);
+    setRegisterFlag(zp_value);
+}
+
+// Adds one to the value held at a specified memory location + offset setting the zero and negative flags as appropriate.
+void CPU::changeMemoryZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset, bool inc) {
+    Byte zp_addr = fetchByte(clock_cycles, memory);
+    zp_addr += offset;
+    clock_cycles--;
+
+    Byte zp_value = readByte(clock_cycles, memory, zp_addr);
+    if (inc) {
+        zp_value++;
+    } else {
+        zp_value--;
+    }
+
+    clock_cycles--;
+    writeByte(clock_cycles, memory, zp_addr, zp_value);
+    setRegisterFlag(zp_value);
+}
+
+// Adds one to the value held at a specified absolute memory location
+void CPU::changeMemoryAbs(s32 &clock_cycles, Memory &memory, bool inc) {
+    Word abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte abs_value = readByte(clock_cycles, memory, abs_addr);
+    if (inc) {
+        abs_value++;
+    } else {
+        abs_value--;
+    }
+    writeByte(clock_cycles, memory, abs_addr, abs_value);
+    setRegisterFlag(abs_value);
+}
+
+// Adds one to the value held at a specified absolute memory location + an offset
+void CPU::changeMemoryAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset, bool inc) {
+    Word abs_addr = getAbsoluteAddrOffset_NP(clock_cycles, memory, offset);
+    Byte abs_value = readByte(clock_cycles, memory, abs_addr);
+    if (inc) {
+        abs_value++;
+    } else {
+        abs_value--;
+    }
+    clock_cycles--;
+    writeByte(clock_cycles, memory, abs_addr, abs_value);
+    setRegisterFlag(abs_value);
+}
+
+
+// *** Shifts ***
+
 
 // *** Jumps and Calls ***
 // Sets the program counter to the value in the next byte of memory
 void CPU::jumpAbsolute(s32 &clock_cycles, Memory &memory) {
-    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_addr = getAbsoluteAddr(clock_cycles, memory);
     PC = abs_addr;
 }
 
 // Sets the program counter to the value stored at the address of the next value in memory
 void CPU::jumpIndirect(s32 &clock_cycles, Memory &memory) {
-    Word abs_addr = fetchWord(clock_cycles, memory);
+    Word abs_addr = getAbsoluteAddr(clock_cycles, memory);
     abs_addr = readWord(clock_cycles, memory, abs_addr);
     PC = abs_addr;
 }
@@ -645,6 +774,11 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
     clock_cycles -= 2;
 }
 
+// *** Branches ***
+
+// *** Status Flag Changes ***
+
+// *** System Functions ***
 
 
 
