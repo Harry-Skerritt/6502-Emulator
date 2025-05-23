@@ -289,6 +289,34 @@ void Memory::writeWord(s32 &clock_cycles, u32 address, Word value) {
 
 
 // CPU
+// Packs the status flags into a byte for writing to stack
+Byte CPU::packStatusFlags(StatusFlags flags) {
+    Byte status = 0;
+    if (flags.C) status |= carry_bit;
+    if (flags.Z) status |= zero_bit;
+    if (flags.I) status |= interrupt_bit;
+    if (flags.D) status |= decimal_bit;
+    if (flags.B) status |= break_bit;
+    status |= unused_bit;
+    if (flags.V) status |= overflow_bit;
+    if (flags.N) status |= negative_bit;
+    return status;
+}
+
+// Unpacks the status flags from a byte
+CPU::StatusFlags CPU::unpackStatusFlags(Byte value) {
+    StatusFlags flags{};
+    flags.C = value & carry_bit;
+    flags.Z = value & zero_bit;
+    flags.I = value & interrupt_bit;
+    flags.D = value & decimal_bit;
+    flags.B = value & break_bit;
+    flags.unused = value & unused_bit;
+    flags.V = value & overflow_bit;
+    flags.N = value & negative_bit;
+    return flags;
+}
+
 // Sets the 6502 into a reset state
 void CPU::reset(Memory& memory) {
     initDispatchTable();
@@ -365,7 +393,6 @@ void CPU::writeByte(s32 &clock_cycles, Memory &memory, Word address, Byte value)
     clock_cycles--;
 }
 
-
 // Executes the specified cycle amount of cycles on the 6502
 void CPU::execute(s32 cycles, Memory& memory) {
 
@@ -386,6 +413,7 @@ void CPU::execute(s32 cycles, Memory& memory) {
     }
 
 }
+
 
 // *** Address Helpers ***
 // Gets the indirect addressing method address for the x register
@@ -416,18 +444,23 @@ Word CPU::pointerToAddress() const {
 
 // Writes the value to the top of the stack as a 16-bit word
 void CPU::pushToStack(s32 &clock_cycles, Memory &memory, Word value) {
-    memory.writeWord(clock_cycles, pointerToAddress()-1, value);
-    SP -= 2;
-}
-// Writes the value to the top of the stack as an 8-bit byte
-void CPU::pushToStack_8(s32 &clock_cycles, Memory &memory, Word value) {
-    writeByte(clock_cycles, memory, pointerToAddress(), value);
+    writeByte(clock_cycles, memory, pointerToAddress(), value >> 8);
+    SP--;
+
+    writeByte(clock_cycles, memory, pointerToAddress(), value & 0xFF);
     SP--;
 }
 
+// Writes the value to the top of the stack as an 8-bit byte
+void CPU::pushToStack_8(s32 &clock_cycles, Memory &memory, Word value) {
+    memory[pointerToAddress()] = value;
+    clock_cycles--;
+    SP--;
+    clock_cycles--;
+}
 
 // Pulls the top most value from the stack and returns it as a 16-bit word
-Word CPU::pullFromStack(s32 &clock_cycles, Memory &memory) {
+Word CPU::popFromStack(s32 &clock_cycles, Memory &memory) {
     Word stack_value = readWord(clock_cycles, memory, pointerToAddress()+1);
     SP += 2;
     clock_cycles--;
@@ -435,9 +468,11 @@ Word CPU::pullFromStack(s32 &clock_cycles, Memory &memory) {
 }
 
 // Pulls the top most value from the stack and returns it as a 8-bit byte
-Byte CPU::pullFromStack_8(s32 &clock_cycles, Memory &memory) {
-    Byte stack_value = readByte(clock_cycles, memory, pointerToAddress());
+Byte CPU::popFromStack_8(s32 &clock_cycles, Memory &memory) {
     SP++;
+    clock_cycles--;
+
+    Byte stack_value = memory[pointerToAddress()];
     clock_cycles--;
     return stack_value;
 }
@@ -550,18 +585,26 @@ void CPU::pushAccumulator(s32 &clock_cycles, Memory &memory) {
     clock_cycles -= 2; // Todo: This doesnt seem right
 }
 
+// Pushes the processor status flags as a byte to the stack
 void CPU::pushProcessorStatus(s32 &clock_cycles, Memory &memory) {
-
+    Byte status = packStatusFlags(flags);
+    clock_cycles--;
+    pushToStack_8(clock_cycles, memory, status);
 }
 
 // Pulls an 8-bit value from the stack and puts it into the accumulator
 void CPU::pullAccumulator(s32 &clock_cycles, Memory &memory) {
-    Byte value = pullFromStack_8(clock_cycles, memory);
+    Byte value = popFromStack_8(clock_cycles, memory);
     Accumulator = value;
     clock_cycles -= 2; // Todo: This doesnt seem right
     setRegisterFlag(Accumulator);
 }
 
+void CPU::pullProcessorStatus(s32 &clock_cycles, Memory &memory) {
+    Byte status = popFromStack_8(clock_cycles, memory);
+    flags = unpackStatusFlags(status);
+    clock_cycles -= 2;
+}
 
 
 // *** Jumps and Calls ***
@@ -588,7 +631,7 @@ void CPU::jumpToSubroutine(s32 &clock_cycles, Memory &memory) {
 
 // Returns to the point before a subroutine
 void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
-    Word return_addr = pullFromStack(clock_cycles, memory);
+    Word return_addr = popFromStack(clock_cycles, memory);
     PC = return_addr + 1;
     clock_cycles -= 2;
 }

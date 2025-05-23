@@ -66,6 +66,7 @@ namespace  emulator_6502 {
         Byte X_reg;     // X Register
         Byte Y_reg;     // Y Register
 
+        // *** Staus Flags ***
         struct StatusFlags {
             Byte C : 1; // Carry
             Byte Z : 1; // Zero
@@ -77,6 +78,20 @@ namespace  emulator_6502 {
             Byte unused : 1; // Usually bit 5 is unused
         } flags;
 
+        static constexpr Byte
+            carry_bit     = 0b00000001, // Bit 0
+            zero_bit      = 0b00000010, // Bit 1
+            interrupt_bit = 0b00000100, // Bit 2
+            decimal_bit   = 0b00001000, // Bit 3
+            break_bit     = 0b00010000, // Bit 4
+            unused_bit    = 0b00100000, // Bit 5
+            overflow_bit  = 0b01000000, // Bit 6
+            negative_bit  = 0b10000000; // Bit 7
+
+        static Byte packStatusFlags(StatusFlags flags);
+        static StatusFlags unpackStatusFlags(Byte value);
+
+        // Reset
         void reset(Memory& memory);
 
         // Reading
@@ -101,8 +116,8 @@ namespace  emulator_6502 {
         Word pointerToAddress() const;
         void pushToStack(s32& clock_cycles, Memory& memory, Word value);
         void pushToStack_8(s32& clock_cycles, Memory& memory, Word value);
-        Word pullFromStack(s32& clock_cycles, Memory& memory);
-        Byte pullFromStack_8(s32& clock_cycles, Memory& memory);
+        Word popFromStack(s32& clock_cycles, Memory& memory);
+        Byte popFromStack_8(s32& clock_cycles, Memory& memory);
 
 
         // *** Load Registers ***
@@ -135,6 +150,7 @@ namespace  emulator_6502 {
         void pushAccumulator(s32& clock_cycles, Memory& memory);
         void pushProcessorStatus(s32& clock_cycles, Memory& memory);
         void pullAccumulator(s32& clock_cycles, Memory& memory);
+        void pullProcessorStatus(s32& clock_cycles, Memory& memory);
 
         // *** Jumps & Calls ***
         void jumpAbsolute(s32& clock_cycles, Memory& memory);
@@ -280,13 +296,13 @@ namespace  emulator_6502 {
         cpu.pushAccumulator(cycles, memory);
     }
     inline void handle_PHP(CPU& cpu, s32& cycles, Memory& memory) {
-        //Todo: Push Processor status
+        cpu.pushProcessorStatus(cycles, memory);
     }
     inline void handle_PLA(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.pullAccumulator(cycles, memory);
     }
     inline void handle_PLP(CPU& cpu, s32& cycles, Memory& memory) {
-        //Todo: Pull processor status
+        cpu.pullProcessorStatus(cycles, memory);
     }
 
 
