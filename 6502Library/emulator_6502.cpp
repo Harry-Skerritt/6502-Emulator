@@ -131,6 +131,16 @@ bool Memory::loadMemory(std::string &loc) {
         return false;
     }
 
+
+    file.seekg(0, std::ios::end);
+    std::streamsize file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    if (file_size > MAX_MEMORY) {
+        std::cerr << "File too large! Maximum size is " << MAX_MEMORY << " bytes." << std::endl;
+        return false;
+    }
+
     file.read(reinterpret_cast<char*>(data), MAX_MEMORY);
     std::streamsize bytes_read = file.gcount();
 
@@ -156,7 +166,7 @@ void Memory::promptMemoryLoad() {
             std::cerr << "Failed to load file: " << input << std::endl;
         }
     } else {
-        std::cout << "Enter value to initalise memory (press enter for 0x00): ";
+        std::cout << "Enter value to initialise memory (press enter for 0x00): ";
         std::getline(std::cin, input);
         if (input.empty()) {
             initMemory();
@@ -306,14 +316,14 @@ Byte CPU::packStatusFlags(StatusFlags flags) {
 // Unpacks the status flags from a byte
 CPU::StatusFlags CPU::unpackStatusFlags(Byte value) {
     StatusFlags flags{};
-    flags.C = value & carry_bit;
-    flags.Z = value & zero_bit;
-    flags.I = value & interrupt_bit;
-    flags.D = value & decimal_bit;
-    flags.B = value & break_bit;
-    flags.unused = value & unused_bit;
-    flags.V = value & overflow_bit;
-    flags.N = value & negative_bit;
+    flags.C = value & carry_bit != 0;
+    flags.Z = value & zero_bit != 0;
+    flags.I = value & interrupt_bit != 0;
+    flags.D = value & decimal_bit != 0;
+    flags.B = value & break_bit != 0;
+    flags.unused = value & unused_bit != 0;
+    flags.V = value & overflow_bit != 0;
+    flags.N = value & negative_bit != 0;
     return flags;
 }
 
@@ -467,7 +477,7 @@ Word CPU::popFromStack(s32 &clock_cycles, Memory &memory) {
     return stack_value;
 }
 
-// Pulls the top most value from the stack and returns it as a 8-bit byte
+// Pulls the top most value from the stack and returns it as an 8-bit byte
 Byte CPU::popFromStack_8(s32 &clock_cycles, Memory &memory) {
     SP++;
     clock_cycles--;
@@ -582,13 +592,11 @@ void CPU::transferRegister(s32 &clock_cycles, Memory &memory, Byte &reg_from, By
 // Pushes the 8-bit value of the accumulator to the Stack as a 16 bit value
 void CPU::pushAccumulator(s32 &clock_cycles, Memory &memory) {
     pushToStack_8(clock_cycles, memory, Accumulator);
-    clock_cycles -= 2; // Todo: This doesnt seem right
 }
 
 // Pushes the processor status flags as a byte to the stack
 void CPU::pushProcessorStatus(s32 &clock_cycles, Memory &memory) {
     Byte status = packStatusFlags(flags);
-    clock_cycles--;
     pushToStack_8(clock_cycles, memory, status);
 }
 
@@ -596,14 +604,15 @@ void CPU::pushProcessorStatus(s32 &clock_cycles, Memory &memory) {
 void CPU::pullAccumulator(s32 &clock_cycles, Memory &memory) {
     Byte value = popFromStack_8(clock_cycles, memory);
     Accumulator = value;
-    clock_cycles -= 2; // Todo: This doesnt seem right
+    clock_cycles --;
     setRegisterFlag(Accumulator);
 }
 
 void CPU::pullProcessorStatus(s32 &clock_cycles, Memory &memory) {
     Byte status = popFromStack_8(clock_cycles, memory);
     flags = unpackStatusFlags(status);
-    clock_cycles -= 2;
+    flags.unused = 1;
+    clock_cycles --;
 }
 
 

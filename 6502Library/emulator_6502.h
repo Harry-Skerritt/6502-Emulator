@@ -28,7 +28,7 @@ namespace  emulator_6502 {
 
     class Memory {
     public:
-        static const u32 MAX_MEMORY = 1024 * 64;
+        static constexpr u32 MAX_MEMORY = 1024 * 64;
         Byte data[MAX_MEMORY];
 
 
@@ -113,7 +113,7 @@ namespace  emulator_6502 {
         Word getIndirectYAddr(s32& clock_cycles, Memory& memory);
 
         // *** Stack Helpers ***
-        Word pointerToAddress() const;
+        [[nodiscard]] Word pointerToAddress() const;
         void pushToStack(s32& clock_cycles, Memory& memory, Word value);
         void pushToStack_8(s32& clock_cycles, Memory& memory, Word value);
         Word popFromStack(s32& clock_cycles, Memory& memory);
@@ -305,7 +305,6 @@ namespace  emulator_6502 {
         cpu.pullProcessorStatus(cycles, memory);
     }
 
-
     // Wrapper functions - Jumps and Calls
     inline void handle_JMP_ABS(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.jumpAbsolute(cycles, memory);
@@ -338,7 +337,7 @@ public:
         message = oss.str();
     }
 
-    const char* what() const noexcept override {
+    [[nodiscard]] const char* what() const noexcept override {
         return message.c_str();
     }
 };
