@@ -1,6 +1,7 @@
 
 #include <emulator_6502.h>
 
+// http://www.6502.org/users/obelisk/
 
 using namespace emulator_6502;
 int main() {
@@ -8,31 +9,24 @@ int main() {
     CPU cpu;
     Memory memory;
 
-    cpu.reset(memory);
-
-    cpu.X_reg = 0x0f;
+    memory.setMemory(0xEA);
 
     // 0xFFFC = Reset Vector
-    memory.data[0xFFFC] = 0x20; // JSR 0xB2
-    memory.data[0xFFFD] = 0xB2; //
-    memory.data[0xFFFE] = 0x00;
-    memory.data[0x00B2] = 0xA9; // LDA 0x89
-    memory.data[0x00B3] = 0x89; //
-    memory.data[0x00B4] = 0x60; // RTS
-    memory.data[0xFFFF] = 0xAA; // TAX
+    // Reset Address: 0x8000
+    memory.data[0xFFFC] = 0x00;
+    memory.data[0xFFFD] = 0x80;
 
-    //memory.dumpMemory();
-    //memory.dumpMemory(0xFF00, 256);
+    cpu.reset(memory);
 
-    //memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
+    memory.data[0x8000] = 0xA9;
+    memory.data[0x8001] = 0x42;
+    memory.data[0x8002] = 0x8D;
+    memory.data[0x8003] = 0x00;
+    memory.data[0x8004] = 0x60;
 
-    outputByte(cpu.Accumulator, "A Register Before: ");
-    outputByte(cpu.X_reg, "X Register Before: ");
+    cpu.execute(4, memory);
 
-    cpu.execute(16, memory);
-
-    outputByte(cpu.Accumulator, "A Register After: ");
-    outputByte(cpu.Accumulator, "X Register After: ");
+    memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
 
 
 

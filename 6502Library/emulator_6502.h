@@ -43,6 +43,7 @@ namespace  emulator_6502 {
         }
 
         void initMemory();
+        void setMemory(Byte to_set);
         //void loadMemory(std::string& loc);
 
         // Memory Dumps

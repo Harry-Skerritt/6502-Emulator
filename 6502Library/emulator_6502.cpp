@@ -112,6 +112,15 @@ void Memory::initMemory() {
     std::cout << "Memory initialized" << std::endl;
 }
 
+// Sets the whole memory to the value passed in
+void Memory::setMemory(Byte to_set) {
+    for (unsigned char & i : data) {
+        i = to_set;
+    }
+
+    outputByte(to_set, "Memory Set to: ");
+}
+
 // Dumps the given memory section to the console
 void Memory::dumpMemory(size_t start, size_t length) {
     std::cout << "Memory Dump ###" << std::endl;
@@ -225,13 +234,20 @@ void Memory::writeWord(s32 &clock_cycles, u32 address, Word value) {
 void CPU::reset(Memory& memory) {
     initDispatchTable();
 
-    PC = 0xFFFC;
+    PC = 0xFFFC; // Reset Vector 0xFFFC 0xFFFD
     SP = 0xFF;
+
+    // Gets the address from the reset vector
+    Byte start_low = memory[PC];
+    Byte start_high = memory[PC+1];
+    Word start_addr = start_low | (start_high << 8);
+
+    PC = start_addr; // <- Where to start program from
 
     Accumulator = X_reg = Y_reg = 0;
     flags = {}; // Resets flags to zero
     flags.unused = 1; // This is always set
-    memory.initMemory();
+    //memory.initMemory();
 }
 
 // *** Reading from memory ***
