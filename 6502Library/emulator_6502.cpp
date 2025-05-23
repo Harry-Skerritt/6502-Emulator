@@ -94,6 +94,14 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x28] = handle_PLP;
 
     // Logical
+    dispatch_table[0x29] = handle_AND_IM;
+    dispatch_table[0x25] = handle_AND_ZP;
+    dispatch_table[0x35] = handle_AND_ZPX;
+    dispatch_table[0x2D] = handle_AND_ABS;
+    dispatch_table[0x3D] = handle_AND_ABSX;
+    dispatch_table[0x39] = handle_AND_ABSY;
+    dispatch_table[0x21] = handle_AND_INDX;
+    dispatch_table[0x31] = handle_AND_INDY;
 
     // Arithmetic
 
@@ -496,6 +504,19 @@ Word CPU::getAbsoluteAddrOffset_NP(s32 &clock_cycles, Memory &memory, Byte &offs
     return abs_offset;
 }
 
+// Gets the zero point address
+Byte CPU::getZPAddr(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = fetchByte(clock_cycles, memory);
+    return zp_addr;
+}
+
+// Gets the zero point address + an offset
+Byte CPU::getZPAddrOffset(s32 &clock_cycles, Memory &memory, Byte& offset) {
+    Byte zp_addr = fetchByte(clock_cycles, memory);
+    zp_addr += offset;
+    clock_cycles--;
+    return zp_addr;
+}
 
 
 
@@ -548,42 +569,47 @@ void CPU::setRegisterFlag(Byte& reg) {
     flags.N = (reg & 0b1000000) > 0;
 }
 
+// Loads the specified register with the value at the next memory address
 void CPU::loadRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
     reg = fetchByte(clock_cycles, memory);
     setRegisterFlag(reg);
 }
 
+// Loads the specified register with the value at the next memory address in ZP
 void CPU::loadZPRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
-    Byte zp_addr = fetchByte(clock_cycles, memory);
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
     reg = readByte(clock_cycles, memory, zp_addr);
     setRegisterFlag(reg);
 }
 
+// Loads the specified register with the value at the next memory address in ZP + offset
 void CPU::loadZPOffsetRegister(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
-    Byte zp_addr = fetchByte(clock_cycles, memory);
-    zp_addr += offset;
-    clock_cycles--;
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
 
     reg = readByte(clock_cycles, memory, zp_addr);
     setRegisterFlag(reg);
 }
 
+// Loads the specified register with the value at the next memory address (Absolute addressing)
 void CPU::loadAbsRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
     Word abs_addr = getAbsoluteAddr(clock_cycles, memory);
     reg = readByte(clock_cycles, memory, abs_addr);
     setRegisterFlag(reg);
 }
 
+// Loads the specified register with the value at the next memory address (Absolute addressing) + offset
 void CPU::loadAbsOffsetRegister(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
     Word abs_offset = getAbsoluteAddrOffset(clock_cycles, memory, offset);
     reg = readByte(clock_cycles, memory, abs_offset);
 }
 
+// Loads the specified register with the value at the next memory address (Indirect X addressing mode)
 void CPU::loadIndirectXRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
     Word indirect_addr = getIndirectXAddr(clock_cycles, memory);
     reg = readByte(clock_cycles, memory, indirect_addr);
 }
 
+// Loads the specified register with the value at the next memory address (Indirect Y addressing mode)
 void CPU::loadIndirectYRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
     Word indirect_addr = getIndirectYAddr(clock_cycles, memory);
     reg = readByte(clock_cycles, memory, indirect_addr);
@@ -592,7 +618,7 @@ void CPU::loadIndirectYRegister(s32 &clock_cycles, Memory &memory, Byte &reg) {
 
 // *** Store Registers ***
 void CPU::storeRegisterZP(s32 &clock_cycles, Memory &memory, Byte &reg) {
-    Word zp_addr = fetchWord(clock_cycles, memory);
+    Word zp_addr = getZPAddr(clock_cycles, memory);
     writeByte(clock_cycles, memory, zp_addr, reg);
 }
 
@@ -600,6 +626,7 @@ void CPU::storeRegisterZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, By
     Word zp_addr = fetchWord(clock_cycles, memory);
     zp_addr += offset;
     clock_cycles--;
+    //Todo: Check if this needs to be a word
 
     writeByte(clock_cycles, memory, zp_addr, reg);
 }
@@ -662,6 +689,67 @@ void CPU::pullProcessorStatus(s32 &clock_cycles, Memory &memory) {
 }
 
 // *** Logical ***
+// BITWISE AND
+// Performs a logical bitwise AND on the register specified with the value in the memory
+void CPU::bitwiseAndIM(s32 &clock_cycles, Memory &memory, Byte& reg) {
+    Byte value = fetchByte(clock_cycles, memory);
+    reg &= value;
+    setRegisterFlag(reg);
+}
+
+// Performs a logical bitwise AND on the register specified with the value in the memory from ZP
+void CPU::bitwiseAndZP(s32& clock_cycles, Memory &memory, Byte& reg) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    reg &= value;
+    setRegisterFlag(reg);
+}
+
+// Performs a logical bitwise AND on the register specified with the value in the memory from ZP + offset
+void CPU::bitwiseAndZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    reg &= value;
+}
+
+// Performs a logical bitwise AND on the register specified with the value in the memory from Abs
+void CPU::bitwiseAndAbs(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    reg &= value;
+    setRegisterFlag(reg);
+}
+
+// Performs a logical bitwise AND on the register specified with the value in the memory from Abs + offset
+void CPU::bitwiseAndAbsOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    reg &= value;
+    setRegisterFlag(reg);
+}
+
+// Performs a logical bitwise AND on the register specified with the value in the memory (Indirect X Addr Mode)
+void CPU::bitwiseAndIndirectX(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    reg &= value;
+    setRegisterFlag(reg);
+}
+
+// Performs a logical bitwise AND on the register specified with the value in the memory (Indirect Y Addr Mode)
+void CPU::bitwiseAndIndirectY(s32& clock_cycles, Memory& memory, Byte& reg) {
+    Byte indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    reg &= value;
+    setRegisterFlag(reg);
+}
+
+
+
+
+
+
+
 
 // *** Arithmetic ***
 

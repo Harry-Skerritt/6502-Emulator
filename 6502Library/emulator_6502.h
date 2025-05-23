@@ -60,11 +60,11 @@ namespace  emulator_6502 {
 
     class CPU {
     public:
-        Word PC;    // Program Counter
-        Byte SP;    // Stack Pointer
+        Word PC;              // Program Counter
+        Byte SP;              // Stack Pointer
         Byte Accumulator;     // Accumulator (register)
-        Byte X_reg;     // X Register
-        Byte Y_reg;     // Y Register
+        Byte X_reg;           // X Register
+        Byte Y_reg;           // Y Register
 
         // *** Staus Flags ***
         struct StatusFlags {
@@ -116,6 +116,9 @@ namespace  emulator_6502 {
         Word getAbsoluteAddrOffset(s32& clock_cycles, Memory& memory, Byte& offset);
         Word getAbsoluteAddrOffset_NP(s32& clock_cycles, Memory& memory, Byte& offset);
 
+        Byte getZPAddr(s32& clock_cycles, Memory& memory);
+        Byte getZPAddrOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+
         // *** Stack Helpers ***
         [[nodiscard]] Word pointerToAddress() const;
         void pushToStack(s32& clock_cycles, Memory& memory, Word value);
@@ -157,6 +160,13 @@ namespace  emulator_6502 {
         void pullProcessorStatus(s32& clock_cycles, Memory& memory);
 
         // *** Logical ***
+        void bitwiseAndIM(s32& clock_cycles, Memory& memory, Byte& reg);
+        void bitwiseAndZP(s32& clock_cycles, Memory& memory, Byte& reg);
+        void bitwiseAndZPOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void bitwiseAndAbs(s32& clock_cycles, Memory& memory, Byte& reg);
+        void bitwiseAndAbsOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void bitwiseAndIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
+        void bitwiseAndIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
 
         // *** Arithmetic ***
 
@@ -336,6 +346,30 @@ namespace  emulator_6502 {
     }
 
     // Wrapper functions - Logical
+    inline void handle_AND_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndIM(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_AND_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndZP(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_AND_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndZPOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_AND_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndAbs(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_AND_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndAbsOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_AND_ABSY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndAbsOffset(cycles, memory, cpu.Accumulator, cpu.Y_reg);
+    }
+    inline void handle_AND_INDX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndIndirectX(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_AND_INDY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitwiseAndIndirectY(cycles, memory, cpu.Accumulator);
+    }
 
     // Wrapper functions - Arithmetic
 

@@ -23,7 +23,7 @@ int main() {
     cpu.reset(memory);
     cpu.execute(60, memory);
 
-    //memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
+    memory.dumpMemoryToFile(0, memory.MAX_MEMORY);
 
     return 0;
 }
