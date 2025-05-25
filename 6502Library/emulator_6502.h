@@ -214,6 +214,8 @@ namespace  emulator_6502 {
         // *** Status Flag Changes ***
 
         // *** System Functions ***
+        void forceInterrupt(s32& clock_cycles, Memory& memory);
+        void returnFromInterrupt(s32& clock_cycles, Memory& memory);
 
     };
 
@@ -517,8 +519,14 @@ namespace  emulator_6502 {
     // Wrapper functions - Status Flag Changes
 
     // Wrapper function - System Functions
+    inline void handle_BRK(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.forceInterrupt(cycles, memory);
+    }
     inline void handle_NOP(CPU& cpu, s32& cycles, Memory& memory) {
         cycles--;
+    }
+    inline void handle_RTI(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.returnFromInterrupt(cycles, memory);
     }
 
 };

@@ -159,7 +159,9 @@ void emulator_6502::initDispatchTable() {
     // Status Flag Changes
 
     // System Functions
+    dispatch_table[0x00] = handle_BRK;
     dispatch_table[0xEA] = handle_NOP;
+    dispatch_table[0x40] = handle_RTI;
 }
 
 
@@ -552,7 +554,7 @@ Word CPU::pointerToAddress() const {
     return 0x100 | SP;
 }
 
-// Writes the value to the top of the stack as a 16-bit word
+// Writes the value to the top of the stack as a 16-bit word (2 CC)
 void CPU::pushToStack(s32 &clock_cycles, Memory &memory, Word value) {
     writeByte(clock_cycles, memory, pointerToAddress(), value >> 8);
     SP--;
@@ -561,7 +563,7 @@ void CPU::pushToStack(s32 &clock_cycles, Memory &memory, Word value) {
     SP--;
 }
 
-// Writes the value to the top of the stack as an 8-bit byte
+// Writes the value to the top of the stack as an 8-bit byte (2 CC)
 void CPU::pushToStack_8(s32 &clock_cycles, Memory &memory, Word value) {
     memory[pointerToAddress()] = value;
     clock_cycles--;
@@ -569,7 +571,7 @@ void CPU::pushToStack_8(s32 &clock_cycles, Memory &memory, Word value) {
     clock_cycles--;
 }
 
-// Pulls the top most value from the stack and returns it as a 16-bit word
+// Pulls the top most value from the stack and returns it as a 16-bit word (3 CC)
 Word CPU::popFromStack(s32 &clock_cycles, Memory &memory) {
     Word stack_value = readWord(clock_cycles, memory, pointerToAddress()+1);
     SP += 2;
@@ -577,7 +579,7 @@ Word CPU::popFromStack(s32 &clock_cycles, Memory &memory) {
     return stack_value;
 }
 
-// Pulls the top most value from the stack and returns it as an 8-bit byte
+// Pulls the top most value from the stack and returns it as an 8-bit byte (2 CC)
 Byte CPU::popFromStack_8(s32 &clock_cycles, Memory &memory) {
     SP++;
     clock_cycles--;
@@ -901,20 +903,6 @@ void CPU::bitTestABS(s32 &clock_cycles, Memory &memory) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // *** Arithmetic ***
 
 // *** Increments and Decrements ***
@@ -1031,6 +1019,44 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
 // *** Status Flag Changes ***
 
 // *** System Functions ***
+// Todo: Test this
+// The BRK instruction forces the generation of an interrupt request. The program counter and processor status are pushed on the stack then the IRQ interrupt vector at $FFFE/F is loaded into the PC and the break flag in the status set to one.
+void CPU::forceInterrupt(s32 &clock_cycles, Memory &memory) {
+    // 1 Byte instruction so need to + PC
+    PC++;
+
+    // Push PC to stack
+    pushToStack(clock_cycles, memory, PC-1);
+
+    // Push Status Flags to stack
+    Byte status = packStatusFlags(flags);
+    pushToStack_8(clock_cycles, memory, status);
+
+    // Set flags
+    flags.B = 1;
+    flags.unused = 1;
+
+    // Load PC to value from interrupt vector
+    Byte ir_low = readByte(clock_cycles, memory, 0xFFFE);
+    Byte ir_high = readByte(clock_cycles, memory, 0xFFFF);
+    PC = (ir_high << 8) | ir_low;
+}
+
+void CPU::returnFromInterrupt(s32 &clock_cycles, Memory &memory) {
+    // Read Status Flags +2
+    Byte status = popFromStack_8(clock_cycles, memory);
+    flags = unpackStatusFlags(status);
+    flags.unused = 1;
+
+    // Read PC +2
+    Word return_addr = popFromStack(clock_cycles, memory);
+    PC = return_addr;
+
+    clock_cycles --;
+}
+
+
+
 
 
 
