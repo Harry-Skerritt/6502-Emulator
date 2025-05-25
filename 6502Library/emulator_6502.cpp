@@ -157,6 +157,13 @@ void emulator_6502::initDispatchTable() {
     // Branches
 
     // Status Flag Changes
+    dispatch_table[0x18] = handle_CLC;
+    dispatch_table[0xD8] = handle_CLD;
+    dispatch_table[0x58] = handle_CLI;
+    dispatch_table[0xB8] = handle_CLV;
+    dispatch_table[0x38] = handle_SEC;
+    dispatch_table[0xF8] = handle_SED;
+    dispatch_table[0x78] = handle_SEI;
 
     // System Functions
     dispatch_table[0x00] = handle_BRK;
@@ -1017,6 +1024,20 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
 // *** Branches ***
 
 // *** Status Flag Changes ***
+// Sets the specified flag to 0
+void CPU::clearFlag(s32 &clock_cycles, Memory &memory, Byte &flag) {
+    flag = 0;
+    clock_cycles--;
+}
+
+// Sets the specified flag to 1
+void CPU::setFlag(s32 &clock_cycles, Memory &memory, Byte &flag) {
+    flag = 1;
+    clock_cycles--;
+}
+
+
+
 
 // *** System Functions ***
 // Todo: Test this
@@ -1042,6 +1063,7 @@ void CPU::forceInterrupt(s32 &clock_cycles, Memory &memory) {
     PC = (ir_high << 8) | ir_low;
 }
 
+// The RTI instruction is used at the end of an interrupt processing routine. It pulls the processor flags from the stack followed by the program counter.
 void CPU::returnFromInterrupt(s32 &clock_cycles, Memory &memory) {
     // Read Status Flags +2
     Byte status = popFromStack_8(clock_cycles, memory);

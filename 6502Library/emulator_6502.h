@@ -212,6 +212,8 @@ namespace  emulator_6502 {
         // *** Branches ***
 
         // *** Status Flag Changes ***
+        void clearFlag(s32& clock_cycles, Memory& memory, Byte& flag);
+        void setFlag(s32& clock_cycles, Memory& memory, Byte& flag);
 
         // *** System Functions ***
         void forceInterrupt(s32& clock_cycles, Memory& memory);
@@ -517,6 +519,27 @@ namespace  emulator_6502 {
     // Wrapper functions - Branches
 
     // Wrapper functions - Status Flag Changes
+    inline void handle_CLC(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.clearFlag(cycles, memory, cpu.flags.C);
+    }
+    inline void handle_CLD(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.clearFlag(cycles, memory, cpu.flags.D);
+    }
+    inline void handle_CLI(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.clearFlag(cycles, memory, cpu.flags.I);
+    }
+    inline void handle_CLV(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.clearFlag(cycles, memory, cpu.flags.V);
+    }
+    inline void handle_SEC(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.setFlag(cycles, memory, cpu.flags.C);
+    }
+    inline void handle_SED(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.setFlag(cycles, memory, cpu.flags.D);
+    }
+    inline void handle_SEI(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.setFlag(cycles, memory, cpu.flags.I);
+    }
 
     // Wrapper function - System Functions
     inline void handle_BRK(CPU& cpu, s32& cycles, Memory& memory) {
