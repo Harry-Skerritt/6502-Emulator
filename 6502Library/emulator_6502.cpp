@@ -94,6 +94,7 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x28] = handle_PLP;
 
     // Logical
+    // AND
     dispatch_table[0x29] = handle_AND_IM;
     dispatch_table[0x25] = handle_AND_ZP;
     dispatch_table[0x35] = handle_AND_ZPX;
@@ -102,6 +103,17 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x39] = handle_AND_ABSY;
     dispatch_table[0x21] = handle_AND_INDX;
     dispatch_table[0x31] = handle_AND_INDY;
+
+    // OR
+    dispatch_table[0x49] = handle_EOR_IM;
+    dispatch_table[0x45] = handle_EOR_ZP;
+    dispatch_table[0x55] = handle_EOR_ZPX;
+    dispatch_table[0x4D] = handle_EOR_ABS;
+    dispatch_table[0x5D] = handle_EOR_ABSX;
+    dispatch_table[0x59] = handle_EOR_ABSY;
+    dispatch_table[0x41] = handle_EOR_INDX;
+    dispatch_table[0x51] = handle_EOR_INDY;
+
 
     // Arithmetic
 
@@ -743,6 +755,68 @@ void CPU::bitwiseAndIndirectY(s32& clock_cycles, Memory& memory, Byte& reg) {
     reg &= value;
     setRegisterFlag(reg);
 }
+
+// BITWISE OR
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory.
+void CPU::exclusiveORIM(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte value = fetchByte(clock_cycles, memory);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory ZP addr
+void CPU::exclusiveORZP(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory ZP addr + offset
+void CPU::exclusiveORZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory absolute addressing mode
+void CPU::exclusiveORAbs(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory absolute addressing mode + offset
+void CPU::exclusiveORAbsOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory indirect x addressing mode
+void CPU::exclusiveORIndirectX(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+// An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory indirect y addressing mode
+void CPU::exclusiveORIndirectY(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    reg ^= value;
+    setRegisterFlag(reg);
+}
+
+
+
+
+
+
 
 
 
