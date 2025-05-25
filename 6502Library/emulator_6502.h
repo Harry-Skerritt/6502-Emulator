@@ -202,6 +202,14 @@ namespace  emulator_6502 {
         void changeMemoryAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset, bool inc = true);
 
         // *** Shifts ***
+        // ASL
+        void arithmeticShiftLeft(s32& clock_cycles, Byte& value);
+        void arithmeticShiftLeftZP(s32& clock_cycles, Memory& memory);
+        void arithmeticShiftLeftZPOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void arithmeticShiftLeftABS(s32& clock_cycles, Memory& memory);
+        void arithmeticShiftLeftAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+
+        // LSR
 
         // *** Jumps & Calls ***
         void jumpAbsolute(s32& clock_cycles, Memory& memory);
@@ -501,6 +509,21 @@ namespace  emulator_6502 {
     }
 
     // Wrapper functions - Shifts
+    void handle_ASL(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.arithmeticShiftLeft(cycles, cpu.Accumulator);
+    }
+    void handle_ASL_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.arithmeticShiftLeftZP(cycles, memory);
+    }
+    void handle_ASL_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.arithmeticShiftLeftZPOffset(cycles, memory, cpu.X_reg);
+    }
+    void handle_ASL_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.arithmeticShiftLeftABS(cycles, memory);
+    }
+    void handle_ASL_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.arithmeticShiftLeftAbsOffset(cycles, memory, cpu.X_reg);
+    }
 
     // Wrapper functions - Jumps and Calls
     inline void handle_JMP_ABS(CPU& cpu, s32& cycles, Memory& memory) {

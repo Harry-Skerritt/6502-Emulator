@@ -147,6 +147,14 @@ void emulator_6502::initDispatchTable() {
 
 
     // Shifts
+    // Arithmetic Shift Left
+    dispatch_table[0x0A] = handle_ASL;
+    dispatch_table[0x06] = handle_ASL_ZP;
+    dispatch_table[0x16] = handle_ASL_ZPX;
+    dispatch_table[0x0E] = handle_ASL_ABS;
+    dispatch_table[0x1E] = handle_ASL_ABSX;
+
+
 
     // Jumps and Calls
     dispatch_table[0x4C] = handle_JMP_ABS;
@@ -990,6 +998,46 @@ void CPU::changeMemoryAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset,
 
 
 // *** Shifts ***
+// Arithmetic Shift Left
+// Shifts the value left 1 bit and sets the appropriate flags
+void CPU::arithmeticShiftLeft(s32& clock_cycles, Byte &value) {
+    flags.C = (value & 0x80) != 0;
+    value <<= 1;
+    setRegisterFlag(value);
+    clock_cycles--;
+}
+
+//This operation shifts all the bits of the accumulator or memory contents one bit left. Bit 0 is set to 0 and bit 7 is placed in the carry flag. The effect of this operation is to multiply the memory contents by 2 (ignoring 2's complement considerations), setting the carry if the result will not fit in 8 bits.
+void CPU::arithmeticShiftLeftZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    arithmeticShiftLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// This operation shifts all the bits of the accumulator or memory contents one bit left. Bit 0 is set to 0 and bit 7 is placed in the carry flag. The effect of this operation is to multiply the memory contents by 2 (ignoring 2's complement considerations), setting the carry if the result will not fit in 8 bits.
+void CPU::arithmeticShiftLeftZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    arithmeticShiftLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// This operation shifts all the bits of the accumulator or memory contents one bit left. Bit 0 is set to 0 and bit 7 is placed in the carry flag. The effect of this operation is to multiply the memory contents by 2 (ignoring 2's complement considerations), setting the carry if the result will not fit in 8 bits.
+void CPU::arithmeticShiftLeftABS(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    arithmeticShiftLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// This operation shifts all the bits of the accumulator or memory contents one bit left. Bit 0 is set to 0 and bit 7 is placed in the carry flag. The effect of this operation is to multiply the memory contents by 2 (ignoring 2's complement considerations), setting the carry if the result will not fit in 8 bits.
+void CPU::arithmeticShiftLeftAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset_NP(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    arithmeticShiftLeft(clock_cycles, value);
+    clock_cycles--;
+}
 
 
 // *** Jumps and Calls ***
