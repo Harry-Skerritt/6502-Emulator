@@ -187,6 +187,10 @@ namespace  emulator_6502 {
         void inclusiveORIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
         void inclusiveORIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
 
+        // Bit Test
+        void performBitTest(Byte& reg, Byte& value);
+        void bitTestZP(s32& clock_cycles, Memory& memory);
+        void bitTestABS(s32& clock_cycles, Memory& memory);
         // *** Arithmetic ***
 
         // *** Increments and Decrements ***
@@ -443,6 +447,13 @@ namespace  emulator_6502 {
         cpu.inclusiveORIndirectY(cycles, memory, cpu.Accumulator);
     }
 
+    // Bit test
+    inline void handle_BIT_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitTestZP(cycles, memory);
+    }
+    inline void handle_BIT_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.bitTestABS(cycles, memory);
+    }
 
 
     // Wrapper functions - Arithmetic

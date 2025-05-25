@@ -124,6 +124,11 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x01] = handle_IOR_INDX;
     dispatch_table[0x11] = handle_IOR_INDY;
 
+    // Bit Test
+    dispatch_table[0x24] = handle_BIT_ZP;
+    dispatch_table[0x2C] = handle_BIT_ABS;
+
+
     // Arithmetic
 
     // Increments and Decrements
@@ -868,6 +873,30 @@ void CPU::inclusiveORIndirectY(s32 &clock_cycles, Memory &memory, Byte &reg) {
     Byte value = readByte(clock_cycles, memory, indirect_addr);
     reg |= value;
     setRegisterFlag(reg);
+}
+
+// Bit Test
+// Performs a Bit Test And and sets registers
+void CPU::performBitTest(Byte& reg, Byte& value) {
+    Byte result = reg & value;
+
+    flags.Z = result ? 0 : 1;
+    flags.N = isBitSet(reg, 0x80) ? 1 : 0;
+    flags.V = isBitSet(reg, 0x40) ? 1 : 0;
+}
+
+// This instruction is used to test if one or more bits are set in a target memory location. The mask pattern in A is ANDed with the value in memory to set or clear the zero flag, but the result is not kept. Bits 7 and 6 of the value from memory are copied into the N and V flags.
+void CPU::bitTestZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    performBitTest(Accumulator, value);
+}
+
+// This instruction is used to test if one or more bits are set in a target memory location. The mask pattern in A is ANDed with the value in memory to set or clear the zero flag, but the result is not kept. Bits 7 and 6 of the value from memory are copied into the N and V flags.
+void CPU::bitTestABS(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    performBitTest(Accumulator, value);
 }
 
 
