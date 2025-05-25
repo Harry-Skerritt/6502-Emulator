@@ -169,7 +169,7 @@ namespace  emulator_6502 {
         void bitwiseAndIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
         void bitwiseAndIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
 
-        //Exclusive OR
+        // Exclusive OR
         void exclusiveORIM(s32& clock_cycles, Memory& memory, Byte& reg);
         void exclusiveORZP(s32& clock_cycles, Memory& memory, Byte& reg);
         void exclusiveORZPOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
@@ -178,7 +178,14 @@ namespace  emulator_6502 {
         void exclusiveORIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
         void exclusiveORIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
 
-
+        // Inclusive OR
+        void inclusiveORIM(s32& clock_cycles, Memory& memory, Byte& reg);
+        void inclusiveORZP(s32& clock_cycles, Memory& memory, Byte& reg);
+        void inclusiveORZPOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void inclusiveORAbs(s32& clock_cycles, Memory& memory, Byte& reg);
+        void inclusiveORAbsOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void inclusiveORIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
+        void inclusiveORIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
 
         // *** Arithmetic ***
 
@@ -384,7 +391,7 @@ namespace  emulator_6502 {
         cpu.bitwiseAndIndirectY(cycles, memory, cpu.Accumulator);
     }
 
-    // OR
+    // Exclusive OR
     inline void handle_EOR_IM(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.exclusiveORIM(cycles, memory, cpu.Accumulator);
     }
@@ -409,6 +416,34 @@ namespace  emulator_6502 {
     inline void handle_EOR_INDY(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.exclusiveORIndirectY(cycles, memory, cpu.Accumulator);
     }
+
+    // Inclusive OR
+    inline void handle_IOR_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.inclusiveORIM(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_IOR_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.inclusiveORZP(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_IOR_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.inclusiveORZPOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_IOR_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.inclusiveORAbs(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_IOR_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.exclusiveORAbsOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_IOR_ABSY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.exclusiveORAbsOffset(cycles, memory, cpu.Accumulator, cpu.Y_reg);
+    }
+    inline void handle_IOR_INDX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.inclusiveORIndirectX(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_IOR_INDY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.inclusiveORIndirectY(cycles, memory, cpu.Accumulator);
+    }
+
+
 
     // Wrapper functions - Arithmetic
 

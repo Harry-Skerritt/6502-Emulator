@@ -104,7 +104,7 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x21] = handle_AND_INDX;
     dispatch_table[0x31] = handle_AND_INDY;
 
-    // OR
+    // EOR
     dispatch_table[0x49] = handle_EOR_IM;
     dispatch_table[0x45] = handle_EOR_ZP;
     dispatch_table[0x55] = handle_EOR_ZPX;
@@ -114,6 +114,15 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x41] = handle_EOR_INDX;
     dispatch_table[0x51] = handle_EOR_INDY;
 
+    // IOR
+    dispatch_table[0x09] = handle_IOR_IM;
+    dispatch_table[0x05] = handle_IOR_ZP;
+    dispatch_table[0x15] = handle_IOR_ZPX;
+    dispatch_table[0x0D] = handle_IOR_ABS;
+    dispatch_table[0x1D] = handle_IOR_ABSX;
+    dispatch_table[0x19] = handle_IOR_ABSY;
+    dispatch_table[0x01] = handle_IOR_INDX;
+    dispatch_table[0x11] = handle_IOR_INDY;
 
     // Arithmetic
 
@@ -756,7 +765,7 @@ void CPU::bitwiseAndIndirectY(s32& clock_cycles, Memory& memory, Byte& reg) {
     setRegisterFlag(reg);
 }
 
-// BITWISE OR
+// Exclusive OR
 // An exclusive OR is performed, bit by bit, on the accumulator contents using the contents of a byte of memory.
 void CPU::exclusiveORIM(s32 &clock_cycles, Memory &memory, Byte &reg) {
     Byte value = fetchByte(clock_cycles, memory);
@@ -811,6 +820,58 @@ void CPU::exclusiveORIndirectY(s32 &clock_cycles, Memory &memory, Byte &reg) {
     reg ^= value;
     setRegisterFlag(reg);
 }
+
+// Inclusive OR
+void CPU::inclusiveORIM(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte value = fetchByte(clock_cycles, memory);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+void CPU::inclusiveORZP(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+void CPU::inclusiveORZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+void CPU::inclusiveORAbs(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+void CPU::inclusiveORAbsOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+void CPU::inclusiveORIndirectX(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+void CPU::inclusiveORIndirectY(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    reg |= value;
+    setRegisterFlag(reg);
+}
+
+
+
 
 
 
