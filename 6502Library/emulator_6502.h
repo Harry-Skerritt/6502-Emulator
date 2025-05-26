@@ -220,8 +220,8 @@ namespace  emulator_6502 {
         // *** Branches ***
 
         // *** Status Flag Changes ***
-        void clearFlag(s32& clock_cycles, Memory& memory, Byte& flag);
-        void setFlag(s32& clock_cycles, Memory& memory, Byte& flag);
+        static Byte clearFlag(s32& clock_cycles, Memory& memory);
+        static Byte setFlag(s32& clock_cycles, Memory& memory);
 
         // *** System Functions ***
         void forceInterrupt(s32& clock_cycles, Memory& memory);
@@ -509,19 +509,19 @@ namespace  emulator_6502 {
     }
 
     // Wrapper functions - Shifts
-    void handle_ASL(CPU& cpu, s32& cycles, Memory& memory) {
+    inline void handle_ASL(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.arithmeticShiftLeft(cycles, cpu.Accumulator);
     }
-    void handle_ASL_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+    inline void handle_ASL_ZP(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.arithmeticShiftLeftZP(cycles, memory);
     }
-    void handle_ASL_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+    inline void handle_ASL_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.arithmeticShiftLeftZPOffset(cycles, memory, cpu.X_reg);
     }
-    void handle_ASL_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+    inline void handle_ASL_ABS(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.arithmeticShiftLeftABS(cycles, memory);
     }
-    void handle_ASL_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+    inline void handle_ASL_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.arithmeticShiftLeftAbsOffset(cycles, memory, cpu.X_reg);
     }
 
@@ -543,25 +543,25 @@ namespace  emulator_6502 {
 
     // Wrapper functions - Status Flag Changes
     inline void handle_CLC(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.clearFlag(cycles, memory, cpu.flags.C);
+        cpu.flags.C = emulator_6502::CPU::clearFlag(cycles, memory);
     }
     inline void handle_CLD(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.clearFlag(cycles, memory, cpu.flags.D);
+        cpu.flags.D = emulator_6502::CPU::clearFlag(cycles, memory);
     }
     inline void handle_CLI(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.clearFlag(cycles, memory, cpu.flags.I);
+        cpu.flags.I = emulator_6502::CPU::clearFlag(cycles, memory);
     }
     inline void handle_CLV(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.clearFlag(cycles, memory, cpu.flags.V);
+        cpu.flags.V = emulator_6502::CPU::clearFlag(cycles, memory);
     }
     inline void handle_SEC(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.setFlag(cycles, memory, cpu.flags.C);
+        cpu.flags.C = emulator_6502::CPU::setFlag(cycles, memory);
     }
     inline void handle_SED(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.setFlag(cycles, memory, cpu.flags.D);
+        cpu.flags.D = emulator_6502::CPU::setFlag(cycles, memory);
     }
     inline void handle_SEI(CPU& cpu, s32& cycles, Memory& memory) {
-        cpu.setFlag(cycles, memory, cpu.flags.I);
+        cpu.flags.I = emulator_6502::CPU::setFlag(cycles, memory);
     }
 
     // Wrapper function - System Functions

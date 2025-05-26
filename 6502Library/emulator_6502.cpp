@@ -336,7 +336,7 @@ void Memory::dumpMemoryToFile(size_t start, size_t length) {
         return;
     }
 
-    const size_t bytes_per_row = 16;
+    constexpr size_t bytes_per_row = 16;
 
     for (size_t addr = start; addr < start + length; addr += bytes_per_row) {
         file << std::hex << std::setw(4) << std::setfill('0') << addr << "  ";
@@ -1073,15 +1073,15 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
 
 // *** Status Flag Changes ***
 // Sets the specified flag to 0
-void CPU::clearFlag(s32 &clock_cycles, Memory &memory, Byte &flag) {
-    flag = 0;
+Byte CPU::clearFlag(s32 &clock_cycles, Memory &memory) {
     clock_cycles--;
+    return 0;
 }
 
 // Sets the specified flag to 1
-void CPU::setFlag(s32 &clock_cycles, Memory &memory, Byte &flag) {
-    flag = 1;
+Byte CPU::setFlag(s32 &clock_cycles, Memory &memory) {
     clock_cycles--;
+    return 1;
 }
 
 
