@@ -3,12 +3,9 @@ project(6502_Emulator)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_library(6502_Library
-        src/emulator_6502.cpp
+add_library(6502_Library STATIC
+        emulator_6502.cpp
+        emulator_6502.h
 )
 
-target_include_directories(6502_Library
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-)
+target_include_directories(6502_Library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
