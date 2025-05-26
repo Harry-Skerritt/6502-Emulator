@@ -10,7 +10,7 @@ int main() {
     Memory memory;
 
 
-
+/*
     memory.setMemory(0xEA);
     memory.data[0xFFFC] = 0x00;
     memory.data[0xFFFD] = 0x80; // 0x8000
@@ -45,6 +45,10 @@ int main() {
     // 0x01FD = a0
     // 0x01FE = 06
     // 0x01FF = 80
+
+*/
+
+    memory.promptMemoryLoad();
 
     cpu.reset(memory);
     cpu.execute(60, memory);

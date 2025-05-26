@@ -195,6 +195,16 @@ namespace  emulator_6502 {
 
         // *** Arithmetic ***
 
+        // Compare A, X, Y
+        void setComparisonFlags(Byte& reg, Byte& value);
+        void compareRegisterIM(s32& clock_cycles, Memory& memory, Byte& reg);
+        void compareRegisterZP(s32& clock_cycles, Memory& memory, Byte& reg);
+        void compareRegisterZPOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void compareRegisterABS(s32& clock_cycles, Memory& memory, Byte& reg);
+        void compareRegisterAbsOffset(s32& clock_cycles, Memory& memory, Byte& reg, Byte& offset);
+        void compareRegisterIndirectX(s32& clock_cycles, Memory& memory, Byte& reg);
+        void compareRegisterIndirectY(s32& clock_cycles, Memory& memory, Byte& reg);
+
         // *** Increments and Decrements ***
         void incrementRegister(s32& clock_cycles, Memory& memory, Byte& reg);
         void decrementRegister(s32& clock_cycles, Memory& memory, Byte& reg);
@@ -498,6 +508,52 @@ namespace  emulator_6502 {
 
 
     // Wrapper functions - Arithmetic
+
+    // Comparisons
+    inline void handle_CMP_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterIM(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_CMP_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterZP(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_CMP_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterZPOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_CMP_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterABS(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_CMP_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterAbsOffset(cycles, memory, cpu.Accumulator, cpu.X_reg);
+    }
+    inline void handle_CMP_ABSY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterAbsOffset(cycles, memory, cpu.Accumulator, cpu.Y_reg);
+    }
+    inline void handle_CMP_INDX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterIndirectX(cycles, memory, cpu.Accumulator);
+    }
+    inline void handle_CMP_INDY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterIndirectY(cycles, memory, cpu.Accumulator);
+    }
+
+    inline void handle_CPX_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterIM(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_CPX_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterZP(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_CPX_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterABS(cycles, memory, cpu.X_reg);
+    }
+
+    inline void handle_CPY_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterIM(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_CPY_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterZP(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_CPY_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.compareRegisterABS(cycles, memory, cpu.Y_reg);
+    }
 
     // Wrapper functions - Increments and decrements
     inline void handle_INC_ZP(CPU& cpu, s32& cycles, Memory& memory) {

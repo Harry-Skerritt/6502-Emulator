@@ -131,6 +131,25 @@ void emulator_6502::initDispatchTable() {
 
     // Arithmetic
 
+    // Comparisons
+    dispatch_table[0xC9] = handle_CMP_IM;
+    dispatch_table[0xC5] = handle_CMP_ZP;
+    dispatch_table[0xD5] = handle_CMP_ZPX;
+    dispatch_table[0xCD] = handle_CMP_ABS;
+    dispatch_table[0xDD] = handle_CMP_ABSX;
+    dispatch_table[0xD9] = handle_CMP_ABSY;
+    dispatch_table[0xC1] = handle_CMP_INDX;
+    dispatch_table[0xD1] = handle_CMP_INDY;
+
+    dispatch_table[0xE0] = handle_CPX_IM;
+    dispatch_table[0xE4] = handle_CPX_ZP;
+    dispatch_table[0xEC] = handle_CPX_ABS;
+
+    dispatch_table[0xC0] = handle_CPY_IM;
+    dispatch_table[0xC4] = handle_CPY_ZP;
+    dispatch_table[0xCC] = handle_CPY_ABS;
+
+
     // Increments and Decrements
     dispatch_table[0xE6] = handle_INC_ZP;
     dispatch_table[0xF6] = handle_INC_ZPX;
@@ -761,6 +780,7 @@ void CPU::pullProcessorStatus(s32 &clock_cycles, Memory &memory) {
     clock_cycles --;
 }
 
+
 // *** Logical ***
 // BITWISE AND
 // Performs a logical bitwise AND on the register specified with the value in the memory
@@ -948,6 +968,68 @@ void CPU::bitTestABS(s32 &clock_cycles, Memory &memory) {
 
 
 // *** Arithmetic ***
+// Todo: Add ADC SBC
+
+// CMP & CPX & CPY
+// Sets the flags for register comparisons
+void CPU::setComparisonFlags(Byte &reg, Byte &value) {
+    Byte result = reg - value;
+    flags.C = reg >= value;
+    flags.Z = reg == value;
+    flags.N = ((result & 0x80) != 0);
+}
+
+// This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterIM(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte value = fetchByte(clock_cycles, memory);
+    setComparisonFlags(reg, value);
+}
+
+// This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterZP(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    setComparisonFlags(reg, value);
+}
+
+// This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    setComparisonFlags(reg, value);
+}
+
+// This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterABS(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    setComparisonFlags(reg, value);
+}
+
+// This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterAbsOffset(s32 &clock_cycles, Memory &memory, Byte &reg, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    setComparisonFlags(reg, value);
+}
+
+//This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterIndirectX(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    setComparisonFlags(reg, value);
+}
+
+//This instruction compares the contents of the X register with another memory held value and sets the zero and carry flags as appropriate.
+void CPU::compareRegisterIndirectY(s32 &clock_cycles, Memory &memory, Byte &reg) {
+    Byte indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    setComparisonFlags(reg, value);
+}
+
+
+
+
 
 
 
@@ -1226,6 +1308,7 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
     clock_cycles -= 2;
 }
 
+
 // *** Branches ***
 // Todo: Note: If one is wrong they're ALL wrong!
 // If the carry flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
@@ -1375,15 +1458,6 @@ void CPU::branchIfOverflowSet(s32 &clock_cycles, Memory &memory) {
 }
 
 
-
-
-
-
-
-
-
-
-
 // *** Status Flag Changes ***
 // Sets the specified flag to 0
 Byte CPU::clearFlag(s32 &clock_cycles, Memory &memory) {
@@ -1396,8 +1470,6 @@ Byte CPU::setFlag(s32 &clock_cycles, Memory &memory) {
     clock_cycles--;
     return 1;
 }
-
-
 
 
 // *** System Functions ***
@@ -1437,11 +1509,3 @@ void CPU::returnFromInterrupt(s32 &clock_cycles, Memory &memory) {
 
     clock_cycles --;
 }
-
-
-
-
-
-
-
-
