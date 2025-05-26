@@ -194,6 +194,25 @@ namespace  emulator_6502 {
 
 
         // *** Arithmetic ***
+        // Addition With Carry
+        void additionWithCarry(Byte& value);
+        void additionWithCarryIM(s32& clock_cycles, Memory& memory);
+        void additionWithCarryZP(s32& clock_cycles, Memory& memory);
+        void additionWithCarryZPOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void additionWithCarryAbs(s32& clock_cycles, Memory& memory);
+        void additionWithCarryAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void additionWithCarryIndirectX(s32& clock_cycles, Memory& memory);
+        void additionWithCarryIndirectY(s32& clock_cycles, Memory& memory);
+
+        // Subtraction With Carry
+        void subtractionWithCarry(Byte& value);
+        void subtractionWithCarryIM(s32& clock_cycles, Memory& memory);
+        void subtractionWithCarryZP(s32& clock_cycles, Memory& memory);
+        void subtractionWithCarryZPOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void subtractionWithCarryAbs(s32& clock_cycles, Memory& memory);
+        void subtractionWithCarryAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void subtractionWithCarryIndirectX(s32& clock_cycles, Memory& memory);
+        void subtractionWithCarryIndirectY(s32& clock_cycles, Memory& memory);
 
         // Compare A, X, Y
         void setComparisonFlags(Byte& reg, Byte& value);
@@ -508,6 +527,57 @@ namespace  emulator_6502 {
 
 
     // Wrapper functions - Arithmetic
+    // Addition
+    inline void handle_ADC_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryIM(cycles, memory);
+    }
+    inline void handle_ADC_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryZP(cycles, memory);
+    }
+    inline void handle_ADC_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryZPOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_ADC_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryAbs(cycles, memory);
+    }
+    inline void handle_ADC_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryAbsOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_ADC_ABSY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryAbsOffset(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_ADC_INDX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryIndirectX(cycles, memory);
+    }
+    inline void handle_ADC_INDY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.additionWithCarryIndirectY(cycles, memory);
+    }
+
+    // Subtraction
+    inline void handle_SBC_IM(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryIM(cycles, memory);
+    }
+    inline void handle_SBC_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryZP(cycles, memory);
+    }
+    inline void handle_SBC_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryZPOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_SBC_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryAbs(cycles, memory);
+    }
+    inline void handle_SBC_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryAbsOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_SBC_ABSY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryAbsOffset(cycles, memory, cpu.Y_reg);
+    }
+    inline void handle_SBC_INDX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryIndirectX(cycles, memory);
+    }
+    inline void handle_SBC_INDY(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.subtractionWithCarryIndirectY(cycles, memory);
+    }
 
     // Comparisons
     inline void handle_CMP_IM(CPU& cpu, s32& cycles, Memory& memory) {

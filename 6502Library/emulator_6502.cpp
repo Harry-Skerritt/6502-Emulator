@@ -36,6 +36,7 @@ void emulator_6502::outputWord(Word value, const std::string& before_text, bool 
 
 // Initialises the dispatch table to handle opcodes
 void emulator_6502::initDispatchTable() {
+    // Load Registers
     // LDA
     dispatch_table[0xA9] = handle_LDA_IM;
     dispatch_table[0xA5] = handle_LDA_ZP;
@@ -79,11 +80,13 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x94] = handle_STY_ZPX;
     dispatch_table[0x8C] = handle_STY_ABS;
 
+
     // Register Transfers
     dispatch_table[0xAA] = handle_TAX;
     dispatch_table[0xA8] = handle_TAY;
     dispatch_table[0x8A] = handle_TXA;
     dispatch_table[0x98] = handle_TYA;
+
 
     // Stack Operations
     dispatch_table[0xBA] = handle_TSX;
@@ -92,6 +95,7 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x08] = handle_PHP;
     dispatch_table[0x68] = handle_PLA;
     dispatch_table[0x28] = handle_PLP;
+
 
     // Logical
     // AND
@@ -130,6 +134,25 @@ void emulator_6502::initDispatchTable() {
 
 
     // Arithmetic
+    // Addition
+    dispatch_table[0x69] = handle_ADC_IM;
+    dispatch_table[0x65] = handle_ADC_ZP;
+    dispatch_table[0x75] = handle_ADC_ZPX;
+    dispatch_table[0x6D] = handle_ADC_ABS;
+    dispatch_table[0x7D] = handle_ADC_ABSX;
+    dispatch_table[0x79] = handle_ADC_ABSY;
+    dispatch_table[0x61] = handle_ADC_INDX;
+    dispatch_table[0x71] = handle_ADC_INDY;
+
+    // Subtraction
+    dispatch_table[0xE9] = handle_SBC_IM;
+    dispatch_table[0xE5] = handle_SBC_ZP;
+    dispatch_table[0xF5] = handle_SBC_ZPX;
+    dispatch_table[0xED] = handle_SBC_ABS;
+    dispatch_table[0xFD] = handle_SBC_ABSX;
+    dispatch_table[0xF9] = handle_SBC_ABSY;
+    dispatch_table[0xE1] = handle_SBC_INDX;
+    dispatch_table[0xF1] = handle_SBC_INDY;
 
     // Comparisons
     dispatch_table[0xC9] = handle_CMP_IM;
@@ -195,13 +218,12 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x7E] = handle_ROR_ABSX;
 
 
-
-
     // Jumps and Calls
     dispatch_table[0x4C] = handle_JMP_ABS;
     dispatch_table[0x6c] = handle_JMP_IND;
     dispatch_table[0x20] = handle_JSR;
     dispatch_table[0x60] = handle_RTS;
+
 
     // Branches
     dispatch_table[0x90] = handle_BCC;
@@ -213,6 +235,7 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x50] = handle_BVC;
     dispatch_table[0x70] = handle_BVS;
 
+
     // Status Flag Changes
     dispatch_table[0x18] = handle_CLC;
     dispatch_table[0xD8] = handle_CLD;
@@ -221,6 +244,7 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x38] = handle_SEC;
     dispatch_table[0xF8] = handle_SED;
     dispatch_table[0x78] = handle_SEI;
+
 
     // System Functions
     dispatch_table[0x00] = handle_BRK;
@@ -968,7 +992,122 @@ void CPU::bitTestABS(s32 &clock_cycles, Memory &memory) {
 
 
 // *** Arithmetic ***
-// Todo: Add ADC SBC
+// ADC
+// Adds the value in 'value' to the Accumulator whilst taking into account the carry flag
+void CPU::additionWithCarry(Byte &value) {
+    Byte sum = Accumulator + value + flags.C;
+
+    bool overflow = (~(Accumulator ^ value) & (Accumulator ^ sum)) & 0x80;
+
+    flags.C = sum > 0xFF;
+    flags.V = overflow ? 1 : 0;
+    Accumulator = sum;
+    setRegisterFlag(Accumulator);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryIM(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+    additionWithCarry(value);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    additionWithCarry(value);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    additionWithCarry(value);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryAbs(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    additionWithCarry(value);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    additionWithCarry(value);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryIndirectX(s32 &clock_cycles, Memory &memory) {
+    Byte indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    additionWithCarry(value);
+}
+
+// This instruction adds the contents of a memory location to the accumulator together with the carry bit. If overflow occurs the carry bit is set, this enables multiple byte addition to be performed.
+void CPU::additionWithCarryIndirectY(s32 &clock_cycles, Memory &memory) {
+    Byte indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    additionWithCarry(value);
+}
+
+// SBC
+// Subtracts the value in 'value' from the Accumulator whilst taking into account the carry flag
+void CPU::subtractionWithCarry(Byte &value) {
+    value = ~value;
+    additionWithCarry(value);
+
+}
+
+// This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryIM(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+    subtractionWithCarry(value);
+}
+
+// This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    subtractionWithCarry(value);
+}
+
+ // This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    subtractionWithCarry(value);
+}
+
+// This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryAbs(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    subtractionWithCarry(value);
+}
+
+// This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    subtractionWithCarry(value);
+}
+
+// This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryIndirectX(s32 &clock_cycles, Memory &memory) {
+    Byte indirect_addr = getIndirectXAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    subtractionWithCarry(value);
+}
+
+// This instruction subtracts the contents of a memory location to the accumulator together with the not of the carry bit. If overflow occurs the carry bit is clear, this enables multiple byte subtraction to be performed.
+void CPU::subtractionWithCarryIndirectY(s32 &clock_cycles, Memory &memory) {
+    Byte indirect_addr = getIndirectYAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, indirect_addr);
+    subtractionWithCarry(value);
+}
 
 // CMP & CPX & CPY
 // Sets the flags for register comparisons
@@ -1026,12 +1165,6 @@ void CPU::compareRegisterIndirectY(s32 &clock_cycles, Memory &memory, Byte &reg)
     Byte value = readByte(clock_cycles, memory, indirect_addr);
     setComparisonFlags(reg, value);
 }
-
-
-
-
-
-
 
 
 // *** Increments and Decrements ***
@@ -1440,7 +1573,6 @@ void CPU::branchIfOverflowClear(s32 &clock_cycles, Memory &memory) {
 // If the overflow flag is set then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchIfOverflowSet(s32 &clock_cycles, Memory &memory) {
     Byte value = fetchByte(clock_cycles, memory);
-
 
 
     if (isBitSet(flags.V, overflow_bit)) {
