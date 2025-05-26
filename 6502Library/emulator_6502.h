@@ -239,6 +239,14 @@ namespace  emulator_6502 {
         void returnFromSubroutine(s32& clock_cycles, Memory& memory);
 
         // *** Branches ***
+        void branchCarryClear(s32& clock_cycles, Memory& memory);
+        void branchCarrySet(s32& clock_cycles, Memory& memory);
+        void branchIfEqual(s32& clock_cycles, Memory& memory);
+        void branchIfMinus(s32& clock_cycles, Memory& memory);
+        void branchNotEqual(s32& clock_cycles, Memory& memory);
+        void branchIfPositive(s32& clock_cycles, Memory& memory);
+        void branchIfOverflowClear(s32& clock_cycles, Memory& memory);
+        void branchIfOverflowSet(s32& clock_cycles, Memory& memory);
 
         // *** Status Flag Changes ***
         static Byte clearFlag(s32& clock_cycles, Memory& memory);
@@ -609,6 +617,31 @@ namespace  emulator_6502 {
     }
 
     // Wrapper functions - Branches
+    inline void handle_BCC(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchCarryClear(cycles, memory);
+    }
+    inline void handle_BCS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchCarrySet(cycles, memory);
+    }
+    inline void handle_BEQ(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchIfEqual(cycles, memory);
+    }
+    inline void handle_BMI(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchIfMinus(cycles, memory);
+    }
+    inline void handle_BNE(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchNotEqual(cycles, memory);
+    }
+    inline void handle_BPL(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchIfPositive(cycles, memory);
+    }
+    inline void handle_BVC(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchIfOverflowClear(cycles, memory);
+    }
+    inline void handle_BVS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.branchIfOverflowSet(cycles, memory);
+    }
+
 
     // Wrapper functions - Status Flag Changes
     inline void handle_CLC(CPU& cpu, s32& cycles, Memory& memory) {

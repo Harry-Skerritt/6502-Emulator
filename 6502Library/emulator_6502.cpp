@@ -185,6 +185,14 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x60] = handle_RTS;
 
     // Branches
+    dispatch_table[0x90] = handle_BCC;
+    dispatch_table[0xB0] = handle_BCS;
+    dispatch_table[0xF0] = handle_BEQ;
+    dispatch_table[0x30] = handle_BMI;
+    dispatch_table[0xD0] = handle_BNE;
+    dispatch_table[0x10] = handle_BPL;
+    dispatch_table[0x50] = handle_BVC;
+    dispatch_table[0x70] = handle_BVS;
 
     // Status Flag Changes
     dispatch_table[0x18] = handle_CLC;
@@ -939,8 +947,10 @@ void CPU::bitTestABS(s32 &clock_cycles, Memory &memory) {
 }
 
 
-
 // *** Arithmetic ***
+
+
+
 
 // *** Increments and Decrements ***
 // Adds 1 to the specified register and assigns flags
@@ -1187,10 +1197,6 @@ void CPU::rotateRightAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) 
 }
 
 
-
-
-
-
 // *** Jumps and Calls ***
 // Sets the program counter to the value in the next byte of memory
 void CPU::jumpAbsolute(s32 &clock_cycles, Memory &memory) {
@@ -1221,6 +1227,162 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
 }
 
 // *** Branches ***
+// Todo: Note: If one is wrong they're ALL wrong!
+// If the carry flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchCarryClear(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (!isBitSet(flags.C, carry_bit)) {
+        // Carry bit is 0 -> Branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the carry flag is set then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchCarrySet(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (isBitSet(flags.C, carry_bit)) {
+        // Carry bit is 1 -> Branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the zero flag is set then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchIfEqual(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (isBitSet(flags.Z, zero_bit)) {
+        // Zero flag is set -> branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the negative flag is set then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchIfMinus(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (isBitSet(flags.N, negative_bit)) {
+        // Negative flag is set -> branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the zero flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchNotEqual(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (!isBitSet(flags.Z, zero_bit)) {
+        // Zero flag is not set -> branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the negative flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchIfPositive(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (!isBitSet(flags.N, negative_bit)) {
+        // Negative flag is not set -> branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the overflow flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchIfOverflowClear(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+    if (!isBitSet(flags.V, overflow_bit)) {
+        // Overflow flag is not set -> branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+// If the overflow flag is set then add the relative displacement to the program counter to cause a branch to a new location.
+void CPU::branchIfOverflowSet(s32 &clock_cycles, Memory &memory) {
+    Byte value = fetchByte(clock_cycles, memory);
+
+
+
+    if (isBitSet(flags.V, overflow_bit)) {
+        // Overflow flag is set -> branch happens
+        Byte new_pc = PC + value;
+
+        if ((PC & 0xFF00) != (new_pc & 0xFF00)) {
+            // Page Crossed
+            clock_cycles--;
+        }
+
+        clock_cycles--;
+        PC = new_pc;
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 // *** Status Flag Changes ***
 // Sets the specified flag to 0
