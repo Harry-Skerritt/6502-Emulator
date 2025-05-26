@@ -25,7 +25,7 @@ target_link_libraries(MyProject PRIVATE 6502_Library)
 ```
 
 ### Method 2: Manually Adding the Library
-Download the .zip source code from [the releases]()
+Download the .zip source code from [the releases](https://github.com/Harry-Skerritt/6502-Emulator/releases/tag/v1.0.0)
 this can then be dropped into a /external or /include folder within your project
 
 You should then add these lines to your `CMakeLists.txt`, replacing `external` with your external libraries folder
