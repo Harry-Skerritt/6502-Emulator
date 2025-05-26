@@ -1,5 +1,5 @@
 
-#include <emulator_6502.h>
+#include <../6502Library/include/emulator_6502.h>
 
 // http://www.6502.org/users/obelisk/
 
