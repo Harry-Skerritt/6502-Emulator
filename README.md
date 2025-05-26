@@ -41,9 +41,13 @@ An instance of the CPU **and** Memory are required! \
 To load memory you can use a few different functions
 
 #### Hard coding memory
-> memory.initMemory(); // This will set the entire 65535 bytes of memory to 0x00
+```c++
+memory.initMemory(); // This will set the entire 65535 bytes of memory to 0x00
+```
 
-> memory.setMemory(0xEA); // You can put any value as the argument and the entire 65535 bytes of memory will be set to that value
+```c++
+memory.setMemory(0xEA); // You can put any value as the argument and the entire 65535 bytes of memory will be set to that value
+```
 
 If using either of the above memory inits, the values in memory will need to be specified in a way similar to below
 ```c++
@@ -56,10 +60,13 @@ If using either of the above memory inits, the values in memory will need to be 
 
 
 #### Loading from a file
-> memory.loadMemory("/path/to/file"); // You can specify the path to a .bin file which will be loaded into memory
+```c++
+memory.loadMemory("/path/to/file"); // You can specify the path to a .bin file which will be loaded into memory
+```
 
-> memory.promptMemoryLoad(); // This will give you instructions to aid in memory setting within the console
-
+```c++
+memory.promptMemoryLoad(); // This will give you instructions to aid in memory setting within the console
+```
 ***You only need ONE of these lines***
 
 
@@ -68,13 +75,15 @@ The cpu needs to go through its reset sequence and move to the sector of memory 
 This address is specified by the reset vector (0xFFFC and 0xFFFD) and the start address of your program should be stored at these two values using little endian.
 
 To reset the cpu you can use:
-> cpu.reset(memory);
-
+``` c++
+cpu.reset(memory);
+```
 
 ### The final step is executing code
 To execute code the function
-> cpu.execute(x, memory);
-
+```c++
+cpu.execute(x, memory);
+```
 can be used.
 The amount of clock cycles you wish to be performed should be passed in as x.
 
