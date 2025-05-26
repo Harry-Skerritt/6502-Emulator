@@ -2,7 +2,7 @@
 // Created by Harry Skerritt on 22/05/2025.
 //
 
-#include "emulator_6502.h"
+#include "../include/emulator_6502.h"
 
 using namespace emulator_6502;
 
