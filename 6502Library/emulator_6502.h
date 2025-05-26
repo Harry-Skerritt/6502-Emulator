@@ -191,6 +191,8 @@ namespace  emulator_6502 {
         void performBitTest(Byte& reg, Byte& value);
         void bitTestZP(s32& clock_cycles, Memory& memory);
         void bitTestABS(s32& clock_cycles, Memory& memory);
+
+
         // *** Arithmetic ***
 
         // *** Increments and Decrements ***
@@ -210,6 +212,25 @@ namespace  emulator_6502 {
         void arithmeticShiftLeftAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
 
         // LSR
+        void logicalShiftRight(s32& clock_cycles, Byte& value);
+        void logicalShiftRightZP(s32& clock_cycles, Memory& memory);
+        void logicalShiftRightZPOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void logicalShiftRightABS(s32& clock_cycles, Memory& memory);
+        void logicalShiftRightAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+
+        // ROL
+        void rotateLeft(s32& clock_cycles, Byte& value);
+        void rotateLeftZP(s32& clock_cycles, Memory& memory);
+        void rotateLeftZPOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void rotateLeftABS(s32& clock_cycles, Memory& memory);
+        void rotateLeftAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+
+        // ROR
+        void rotateRight(s32& clock_cycles, Byte& value);
+        void rotateRightZP(s32& clock_cycles, Memory& memory);
+        void rotateRightZPOffset(s32& clock_cycles, Memory& memory, Byte& offset);
+        void rotateRightABS(s32& clock_cycles, Memory& memory);
+        void rotateRightAbsOffset(s32& clock_cycles, Memory& memory, Byte& offset);
 
         // *** Jumps & Calls ***
         void jumpAbsolute(s32& clock_cycles, Memory& memory);
@@ -523,6 +544,54 @@ namespace  emulator_6502 {
     }
     inline void handle_ASL_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
         cpu.arithmeticShiftLeftAbsOffset(cycles, memory, cpu.X_reg);
+    }
+
+    inline void handle_LSR(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.logicalShiftRight(cycles, cpu.Accumulator);
+    }
+    inline void handle_LSR_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.logicalShiftRightZP(cycles, memory);
+    }
+    inline void handle_LSR_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.logicalShiftRightZPOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_LSR_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.logicalShiftRightABS(cycles, memory);
+    }
+    inline void handle_LSR_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.logicalShiftRightAbsOffset(cycles, memory, cpu.X_reg);
+    }
+
+    inline void handle_ROL(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateLeft(cycles, cpu.Accumulator);
+    }
+    inline void handle_ROL_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateLeftZP(cycles, memory);
+    }
+    inline void handle_ROL_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateLeftZPOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_ROL_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateLeftABS(cycles, memory);
+    }
+    inline void handle_ROL_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateLeftAbsOffset(cycles, memory, cpu.X_reg);
+    }
+
+    inline void handle_ROR(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateRight(cycles, cpu.Accumulator);
+    }
+    inline void handle_ROR_ZP(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateRightZP(cycles, memory);
+    }
+    inline void handle_ROR_ZPX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateRightZPOffset(cycles, memory, cpu.X_reg);
+    }
+    inline void handle_ROR_ABS(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateRightABS(cycles, memory);
+    }
+    inline void handle_ROR_ABSX(CPU& cpu, s32& cycles, Memory& memory) {
+        cpu.rotateRightAbsOffset(cycles, memory, cpu.X_reg);
     }
 
     // Wrapper functions - Jumps and Calls

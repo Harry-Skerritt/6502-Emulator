@@ -154,6 +154,28 @@ void emulator_6502::initDispatchTable() {
     dispatch_table[0x0E] = handle_ASL_ABS;
     dispatch_table[0x1E] = handle_ASL_ABSX;
 
+    // Logical Shift Right
+    dispatch_table[0x4A] = handle_LSR;
+    dispatch_table[0x46] = handle_LSR_ZP;
+    dispatch_table[0x56] = handle_LSR_ZPX;
+    dispatch_table[0x4E] = handle_LSR_ABS;
+    dispatch_table[0x5E] = handle_LSR_ABSX;
+
+    // Rotate Left
+    dispatch_table[0x2A] = handle_ROL;
+    dispatch_table[0x26] = handle_ROL_ZP;
+    dispatch_table[0x36] = handle_ROL_ZPX;
+    dispatch_table[0x2E] = handle_ROL_ABS;
+    dispatch_table[0x3E] = handle_ROL_ABSX;
+
+    // Rotate Right
+    dispatch_table[0x6A] = handle_ROR;
+    dispatch_table[0x66] = handle_ROR_ZP;
+    dispatch_table[0x76] = handle_ROR_ZPX;
+    dispatch_table[0x6E] = handle_ROR_ABS;
+    dispatch_table[0x7E] = handle_ROR_ABSX;
+
+
 
 
     // Jumps and Calls
@@ -1038,6 +1060,135 @@ void CPU::arithmeticShiftLeftAbsOffset(s32 &clock_cycles, Memory &memory, Byte &
     arithmeticShiftLeft(clock_cycles, value);
     clock_cycles--;
 }
+
+// Logical Shift Right
+// Shifts the value right 1 bit and sets the appropriate flags
+void CPU::logicalShiftRight(s32 &clock_cycles, Byte &value) {
+    flags.C = (value & 0x01) != 0;
+    value >>= 1;
+    setRegisterFlag(value);
+    clock_cycles--;
+}
+
+//Each of the bits in A or M is shift one place to the right. The bit that was in bit 0 is shifted into the carry flag. Bit 7 is set to zero.
+void CPU::logicalShiftRightZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    logicalShiftRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+//Each of the bits in A or M is shift one place to the right. The bit that was in bit 0 is shifted into the carry flag. Bit 7 is set to zero.
+void CPU::logicalShiftRightZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    logicalShiftRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+//Each of the bits in A or M is shift one place to the right. The bit that was in bit 0 is shifted into the carry flag. Bit 7 is set to zero.
+void CPU::logicalShiftRightABS(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    logicalShiftRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+//Each of the bits in A or M is shift one place to the right. The bit that was in bit 0 is shifted into the carry flag. Bit 7 is set to zero.
+void CPU::logicalShiftRightAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset_NP(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    logicalShiftRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+// Rotate Left
+// Shifts bits left by 1, MSB becomes C flag, C flag become B0
+void CPU::rotateLeft(s32 &clock_cycles, Byte &value) {
+    bool prevCarryFlag = flags.C;
+    flags.C = (value & 0x80) != 0;
+    value = (value << 1) | (prevCarryFlag ? 1 : 0);
+    setRegisterFlag(value);
+    clock_cycles--;
+}
+
+// Move each of the bits in either A or M one place to the left. Bit 0 is filled with the current value of the carry flag whilst the old bit 7 becomes the new carry flag value.
+void CPU::rotateLeftZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    rotateLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// Move each of the bits in either A or M one place to the left. Bit 0 is filled with the current value of the carry flag whilst the old bit 7 becomes the new carry flag value.
+void CPU::rotateLeftZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    rotateLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// Move each of the bits in either A or M one place to the left. Bit 0 is filled with the current value of the carry flag whilst the old bit 7 becomes the new carry flag value.
+void CPU::rotateLeftABS(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    rotateLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// Move each of the bits in either A or M one place to the left. Bit 0 is filled with the current value of the carry flag whilst the old bit 7 becomes the new carry flag value.
+void CPU::rotateLeftAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset_NP(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    rotateLeft(clock_cycles, value);
+    clock_cycles--;
+}
+
+// Rotate Right
+// Shifts bits right by 1, LSB become C flag, C flag become B7
+void CPU::rotateRight(s32 &clock_cycles, Byte &value) {
+    bool prevCarryFlag = flags.C;
+    flags.C = (value & 0x80) != 0;
+    value = (value >> 1) | (prevCarryFlag ? 0x80 : 0);
+    setRegisterFlag(value);
+    clock_cycles--;
+}
+
+//Move each of the bits in either A or M one place to the right. Bit 7 is filled with the current value of the carry flag whilst the old bit 0 becomes the new carry flag value.
+void CPU::rotateRightZP(s32 &clock_cycles, Memory &memory) {
+    Byte zp_addr = getZPAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    rotateRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+//Move each of the bits in either A or M one place to the right. Bit 7 is filled with the current value of the carry flag whilst the old bit 0 becomes the new carry flag value.
+void CPU::rotateRightZPOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte zp_addr = getZPAddrOffset(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, zp_addr);
+    rotateRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+//Move each of the bits in either A or M one place to the right. Bit 7 is filled with the current value of the carry flag whilst the old bit 0 becomes the new carry flag value.
+void CPU::rotateRightABS(s32 &clock_cycles, Memory &memory) {
+    Byte abs_addr = getAbsoluteAddr(clock_cycles, memory);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    rotateRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+//Move each of the bits in either A or M one place to the right. Bit 7 is filled with the current value of the carry flag whilst the old bit 0 becomes the new carry flag value.
+void CPU::rotateRightAbsOffset(s32 &clock_cycles, Memory &memory, Byte &offset) {
+    Byte abs_addr = getAbsoluteAddrOffset_NP(clock_cycles, memory, offset);
+    Byte value = readByte(clock_cycles, memory, abs_addr);
+    rotateRight(clock_cycles, value);
+    clock_cycles--;
+}
+
+
+
+
 
 
 // *** Jumps and Calls ***
