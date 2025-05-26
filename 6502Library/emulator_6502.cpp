@@ -742,8 +742,6 @@ void CPU::storeRegisterZPOffset(s32 &clock_cycles, Memory &memory, Byte &reg, By
     Word zp_addr = fetchWord(clock_cycles, memory);
     zp_addr += offset;
     clock_cycles--;
-    //Todo: Check if this needs to be a word
-
     writeByte(clock_cycles, memory, zp_addr, reg);
 }
 
@@ -1605,7 +1603,6 @@ Byte CPU::setFlag(s32 &clock_cycles, Memory &memory) {
 
 
 // *** System Functions ***
-// Todo: Test this
 // The BRK instruction forces the generation of an interrupt request. The program counter and processor status are pushed on the stack then the IRQ interrupt vector at $FFFE/F is loaded into the PC and the break flag in the status set to one.
 void CPU::forceInterrupt(s32 &clock_cycles, Memory &memory) {
     // 1 Byte instruction so need to + PC
