@@ -91,8 +91,8 @@ The amount of clock cycles you wish to be performed should be passed in as x.
 
 
 ### An Example
-The code below shows a basic program for settings up the emulator. \
-The hardcoded program here takes the value 42, store it in the A register. Then stores the A register at address 0x6000
+The code below shows a basic program for setting up the emulator. \
+The hardcoded program here takes the value 42, stores it in the A register. Then stores the A register at address 0x6000
 
 ```c++
 // main.cpp
