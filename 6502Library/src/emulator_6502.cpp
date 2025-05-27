@@ -507,6 +507,10 @@ Byte CPU::fetchByte(s32& clock_cycles, Memory& memory) {
     return data;
 }
 
+SByte CPU::fetchSByte(s32 &clock_cycles, Memory &memory) {
+    return fetchByte(clock_cycles, memory);
+}
+
 // Gets and returns the Byte value at the address, DOES NOT increment PC (Takes byte as address)
 /*
  Byte CPU::readByte(s32 &clock_cycles, Memory &memory, Byte address) {
@@ -1111,7 +1115,12 @@ void CPU::subtractionWithCarryIndirectY(s32 &clock_cycles, Memory &memory) {
 // Sets the flags for register comparisons
 void CPU::setComparisonFlags(Byte &reg, Byte &value) {
     Byte result = reg - value;
-    flags.C = reg >= value;
+    if (reg >= value) {
+        flags.C = 1;
+    } else {
+        flags.C = 0;
+    }
+
     flags.Z = reg == value;
     flags.N = ((result & 0x80) != 0);
 }
@@ -1444,7 +1453,7 @@ void CPU::returnFromSubroutine(s32 &clock_cycles, Memory &memory) {
 // Todo: Note: If one is wrong they're ALL wrong!
 // If the carry flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchCarryClear(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (!isBitSet(flags.C, carry_bit)) {
         // Carry bit is 0 -> Branch happens
@@ -1462,7 +1471,7 @@ void CPU::branchCarryClear(s32 &clock_cycles, Memory &memory) {
 
 // If the carry flag is set then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchCarrySet(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (isBitSet(flags.C, carry_bit)) {
         // Carry bit is 1 -> Branch happens
@@ -1480,7 +1489,7 @@ void CPU::branchCarrySet(s32 &clock_cycles, Memory &memory) {
 
 // If the zero flag is set then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchIfEqual(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (isBitSet(flags.Z, zero_bit)) {
         // Zero flag is set -> branch happens
@@ -1498,7 +1507,7 @@ void CPU::branchIfEqual(s32 &clock_cycles, Memory &memory) {
 
 // If the negative flag is set then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchIfMinus(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (isBitSet(flags.N, negative_bit)) {
         // Negative flag is set -> branch happens
@@ -1516,7 +1525,7 @@ void CPU::branchIfMinus(s32 &clock_cycles, Memory &memory) {
 
 // If the zero flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchNotEqual(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (!isBitSet(flags.Z, zero_bit)) {
         // Zero flag is not set -> branch happens
@@ -1534,7 +1543,7 @@ void CPU::branchNotEqual(s32 &clock_cycles, Memory &memory) {
 
 // If the negative flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchIfPositive(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (!isBitSet(flags.N, negative_bit)) {
         // Negative flag is not set -> branch happens
@@ -1552,7 +1561,7 @@ void CPU::branchIfPositive(s32 &clock_cycles, Memory &memory) {
 
 // If the overflow flag is clear then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchIfOverflowClear(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
     if (!isBitSet(flags.V, overflow_bit)) {
         // Overflow flag is not set -> branch happens
@@ -1570,7 +1579,7 @@ void CPU::branchIfOverflowClear(s32 &clock_cycles, Memory &memory) {
 
 // If the overflow flag is set then add the relative displacement to the program counter to cause a branch to a new location.
 void CPU::branchIfOverflowSet(s32 &clock_cycles, Memory &memory) {
-    Byte value = fetchByte(clock_cycles, memory);
+    SByte value = fetchSByte(clock_cycles, memory);
 
 
     if (isBitSet(flags.V, overflow_bit)) {

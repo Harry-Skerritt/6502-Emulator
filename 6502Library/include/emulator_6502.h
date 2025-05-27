@@ -18,6 +18,7 @@
 namespace  emulator_6502 {
 
     using Byte = uint8_t;
+    using SByte = int8_t;
     using Word = uint16_t;
 
     void outputByte(Byte value, const std::string& before_text = "", bool error = false);
@@ -96,6 +97,7 @@ namespace  emulator_6502 {
 
         // Reading
         Byte fetchByte(s32& clock_cycles, Memory& memory);
+        SByte fetchSByte(s32& clock_cycles, Memory& memory);
         //Byte readByte(s32& clock_cycles, Memory& memory, Byte address);
         static Byte readByte(s32& clock_cycles, Memory& memory, Word address);
 
